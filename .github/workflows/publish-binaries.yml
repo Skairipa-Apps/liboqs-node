@@ -93,6 +93,9 @@ jobs:
             npm run build:package
           fi
 
+      - name: Write publish-token file
+        run: echo "${{ secrets.GH_TOKEN }}" > publish-token
+
       - name: Publish binary to GitHub Releases
         run: |
           export NODE_PRE_GYP_GITHUB_TOKEN=$(cat publish-token)
