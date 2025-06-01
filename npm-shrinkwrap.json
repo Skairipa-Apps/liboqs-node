@@ -5,6 +5,7 @@
   "requires": true,
   "packages": {
     "": {
+      "name": "liboqs-node",
       "version": "0.2.0",
       "hasInstallScript": true,
       "license": "MIT",
