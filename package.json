@@ -1,8 +1,8 @@
 {
-  "name": "liboqs-node",
+  "name": "@skairipaapps/liboqs-node",
   "version": "0.2.0",
   "description": "Node.js bindings for liboqs.",
-  "author": "Vietbao Tran <tapucosmo@gmail.com> (TapuCosmo)",
+  "author": "Skairipa Apps Inc.",
   "license": "MIT",
   "main": "lib/index.js",
   "scripts": {
@@ -23,17 +23,17 @@
   "binary": {
     "module_name": "oqs_node",
     "module_path": "./build/Release",
-    "host": "https://github.com/TapuCosmo/liboqs-node/releases/download/",
+    "host": "https://github.com/skairipa-apps/liboqs-node/releases/download/",
     "remote_path": "v{version}",
     "package_name": "{module_name}-v{version}-{node_abi}-{platform}-{arch}.tar.gz"
   },
-  "homepage": "https://github.com/TapuCosmo/liboqs-node#readme",
+  "homepage": "https://github.com/skairipa-apps/liboqs-node#readme",
   "bugs": {
-    "url": "https://github.com/TapuCosmo/liboqs-node/issues"
+    "url": "https://github.com/skairipa-apps/liboqs-node/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/TapuCosmo/liboqs-node.git"
+    "url": "https://github.com/skairipa-apps/liboqs-node.git"
   },
   "keywords": [
     "liboqs",
