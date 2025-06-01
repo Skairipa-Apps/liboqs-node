@@ -1,4 +1,4 @@
-{x
+{
   "name": "@skairipaapps/liboqs-node",
   "version": "0.2.3",
   "description": "Node.js bindings for liboqs.",
