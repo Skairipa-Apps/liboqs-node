@@ -1,4 +1,4 @@
-{
+{x
   "name": "@skairipaapps/liboqs-node",
   "version": "0.2.1",
   "description": "Node.js bindings for liboqs.",
@@ -18,7 +18,8 @@
     "publish:prepare": "node-pre-gyp configure && node-pre-gyp rebuild && node-pre-gyp package",
     "publish:draft": "NODE_PRE_GYP_GITHUB_TOKEN=$(cat publish-token) node-pre-gyp-github publish",
     "tag_upload_binary_release": "node ./scripts/tag_upload_binary_release.js",
-    "test": "mocha --bail false"
+    "test": "mocha --bail false",
+    "clean": "rm -rf build deps/liboqs/build"
   },
   "binary": {
     "module_name": "oqs_node",
