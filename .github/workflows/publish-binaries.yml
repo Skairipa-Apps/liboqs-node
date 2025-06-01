@@ -1,57 +1,100 @@
-name: Build & Publish Binaries
+name: Build and Publish Binaries
 
 on:
   release:
-    types: [published]  # This triggers AFTER your draft becomes a release
+    types: [published]
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        arch: [x64, arm64]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install deps
-        run: sudo apt-get update && sudo apt-get install -y build-essential python3
-      - run: npm install
-      - run: npx node-gyp rebuild --arch=${{ matrix.arch }}
-      - run: npx node-pre-gyp package
-      - run: npx node-pre-gyp-github publish
+  build:
+    name: Build ${{ matrix.os }}-${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
 
-  build-windows:
-    runs-on: windows-latest
     strategy:
       matrix:
-        arch: [x64, arm64]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm install
-      - run: npx node-gyp rebuild
-      - run: npx node-pre-gyp package
-      - run: npx node-pre-gyp-github publish
+        include:
+          # Linux builds
+          - os: ubuntu-latest
+            arch: x64
+            target: linux
+            cross: false
+          - os: ubuntu-latest
+            arch: ia32
+            target: linux
+            cross: false
+          - os: ubuntu-latest
+            arch: arm64
+            target: linux
+            cross: false
+          - os: ubuntu-latest
+            arch: arm
+            target: linux
+            cross: false
 
-  build-macos:
-    runs-on: macos-14 # arm64, change to macos-13 for Intel
-    strategy:
-      matrix:
-        arch: [arm64, x64]
+          # Windows builds
+          - os: windows-latest
+            arch: x64
+            target: win
+            cross: false
+          - os: windows-latest
+            arch: ia32
+            target: win
+            cross: false
+          - os: ubuntu-latest
+            arch: arm64
+            target: win
+            cross: true
+
+          # macOS builds
+          - os: macos-latest
+            arch: x64
+            target: mac
+            cross: false
+          - os: macos-latest
+            arch: arm64
+            target: mac
+            cross: false
+
+    env:
+      npm_config_arch: ${{ matrix.arch }}
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
-      - run: npx node-gyp rebuild --arch=${{ matrix.arch }}
-      - run: npx node-pre-gyp package
-      - run: npx node-pre-gyp-github publish
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Ensure git submodules
+        run: npm run ensure_submodules
+
+      - name: Install build tools (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential ninja-build cmake
+
+      - name: Install zig for cross compilation (Linux + Windows ARM64)
+        if: matrix.cross == 'true'
+        run: |
+          curl -L -o zig.tar.xz https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz
+          tar xf zig.tar.xz
+          echo "$PWD/zig-linux-x86_64-0.11.0" >> $GITHUB_PATH
+
+      - name: Build for ${{ matrix.os }} ${{ matrix.arch }}
+        run: |
+          if [ "${{ matrix.cross }}" = "true" ]; then
+            npm_config_arch=arm64 CC="zig cc -target aarch64-windows" npm run build:package
+          else
+            npm run build:package
+          fi
+
+      - name: Publish binary to GitHub Releases
+        run: |
+          export NODE_PRE_GYP_GITHUB_TOKEN=$(cat publish-token)
+          npm run publish:draft
 
