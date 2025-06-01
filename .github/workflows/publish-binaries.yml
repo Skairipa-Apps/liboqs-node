@@ -1,0 +1,57 @@
+name: Build & Publish Binaries
+
+on:
+  release:
+    types: [published]  # This triggers AFTER your draft becomes a release
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install deps
+        run: sudo apt-get update && sudo apt-get install -y build-essential python3
+      - run: npm install
+      - run: npx node-gyp rebuild --arch=${{ matrix.arch }}
+      - run: npx node-pre-gyp package
+      - run: npx node-pre-gyp-github publish
+
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npx node-gyp rebuild
+      - run: npx node-pre-gyp package
+      - run: npx node-pre-gyp-github publish
+
+  build-macos:
+    runs-on: macos-14 # arm64, change to macos-13 for Intel
+    strategy:
+      matrix:
+        arch: [arm64, x64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npx node-gyp rebuild --arch=${{ matrix.arch }}
+      - run: npx node-pre-gyp package
+      - run: npx node-pre-gyp-github publish
+
