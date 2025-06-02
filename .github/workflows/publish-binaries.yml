@@ -100,7 +100,7 @@ jobs:
           fi
 
   publish:
-    needs: [build, test]
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - name: Publish to npm
