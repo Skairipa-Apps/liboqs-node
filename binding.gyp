@@ -41,7 +41,7 @@
               "inputs": [],
               "outputs": ["some"],
               "action": [
-                "node",
+                #"node",
                 "npm run prebuild"
 		#"<(module_root_dir)/scripts/run-npm-on-windows.js",
                 #"run",
