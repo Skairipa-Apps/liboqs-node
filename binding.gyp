@@ -10,11 +10,11 @@
         'src/Signature.cpp',
         'src/Sigs.cpp'
       ],
-      'include_dirs': [
-        '<!(node -p "require(\'node-addon-api\').include")',
-        'deps/liboqs/build/include',
-        'deps/liboqs-cpp/include'
-      ],
+"include_dirs": [
+  "<!@(node -p \"require('node-addon-api').include\")",
+  "./deps/liboqs/build/include",
+  "./deps/liboqs-cpp/include"
+],
       'defines': [
         'NAPI_CPP_EXCEPTIONS',
         'NAPI_VERSION=6',

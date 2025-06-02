@@ -1,12 +1,12 @@
 {
   "name": "@skairipaapps/liboqs-node",
-  "version": "1.0.4",
+  "version": "1.2.1",
   "lockfileVersion": 2,
   "requires": true,
   "packages": {
     "": {
       "name": "@skairipaapps/liboqs-node",
-      "version": "1.0.4",
+      "version": "1.2.1",
       "hasInstallScript": true,
       "license": "MIT",
       "dependencies": {
@@ -1370,7 +1370,8 @@
     "node_modules/node-addon-api": {
       "version": "3.2.1",
       "resolved": "https://registry.npmjs.org/node-addon-api/-/node-addon-api-3.2.1.tgz",
-      "integrity": "sha512-mmcei9JghVNDYydghQmeDX8KoAm0FAiYyIcUt/N4nhyAipB17pllZQDOJD2fotxABnt4Mdz+dKTO7eftLg4d0A=="
+      "integrity": "sha512-mmcei9JghVNDYydghQmeDX8KoAm0FAiYyIcUt/N4nhyAipB17pllZQDOJD2fotxABnt4Mdz+dKTO7eftLg4d0A==",
+      "license": "MIT"
     },
     "node_modules/node-fetch": {
       "version": "2.6.5",
