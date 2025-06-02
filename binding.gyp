@@ -21,80 +21,56 @@
         "LIBOQS_CPP_VERSION=\"0.7.1\""
       ],
       "conditions": [
-        # Prebuild script for Linux and macOS
+        // Prebuild for Unix
         [ "OS!='win'", {
           "actions": [
             {
               "action_name": "prebuild",
               "inputs": [],
-              "outputs": ["build/prebuild.stamp"],
+              "outputs": [],
               "action": ["npm", "run", "prebuild"],
               "message": "Running prebuild script for Unix"
             }
           ]
         }],
-        # Prebuild script for Windows
-[ "OS=='win'", {
-  "actions": [
-    {
-      "action_name": "prebuild_win",
-      "inputs": [],
-      "outputs": ["build\\prebuild.stamp"],
-      "action": ["cmd", "/c", "npm run prebuild"],
-      "message": "Running prebuild script for Windows"
-    }
-  ],
-  "msvs_settings": {
-    "VCCLCompilerTool": {
-      "ExceptionHandling": 1,
-      "AdditionalOptions": ["/std:c++20", "/EHsc", "/DUNICODE"]
-    }
-  },
-  "libraries": [
-    "deps\\liboqs\\build\\lib\\oqs.lib"
-  ],
-  "defines": [
-    "NAPI_CPP_EXCEPTIONS",
-    "NAPI_VERSION=6",
-    "LIBOQS_CPP_VERSION=\\\"0.7.1\\\""
-  ],
-  "include_dirs": [
-    "<!@(node -p \"require('node-addon-api').include\")",
-    "./deps/liboqs/build/include",
-    "./deps/liboqs-cpp/include"
-  ]
-}]
-        # Linux-specific compile flags
+        // Prebuild for Windows
+        [ "OS=='win'", {
+          "actions": [
+            {
+              "action_name": "prebuild_win",
+              "inputs": [],
+              "outputs": [],
+              "action": ["cmd", "/c", "npm run prebuild"],
+              "message": "Running prebuild script for Windows"
+            }
+          ],
+          "msvs_settings": {
+            "VCCLCompilerTool": {
+              "ExceptionHandling": 1,
+              "AdditionalOptions": ["/std:c++20", "/EHsc", "/DUNICODE"]
+            }
+          },
+          "libraries": [
+            "deps\\liboqs\\build\\lib\\oqs.lib"
+          ]
+        }],
         [ "OS=='linux'", {
-          "cflags": ["-fexceptions", "-std=c++2a"],
-          "cflags_cc": ["-fexceptions", "-std=c++2a"],
+          "cflags": ["-fexceptions", "-std=c++20"],
+          "cflags_cc": ["-fexceptions", "-std=c++20"],
           "libraries": [
             "-L../deps/liboqs/build/lib",
             "-loqs"
           ]
         }],
-        # macOS-specific settings
         [ "OS=='mac'", {
           "xcode_settings": {
             "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
             "CLANG_CXX_LIBRARY": "libc++"
           },
-          "cflags": ["-fexceptions", "-std=c++2a"],
-          "cflags_cc": ["-fexceptions", "-std=c++2a"],
+          "cflags": ["-fexceptions", "-std=c++20"],
+          "cflags_cc": ["-fexceptions", "-std=c++20"],
           "libraries": [
             "../deps/liboqs/build/lib/liboqs.a"
-          ]
-        }],
-        # Windows-specific settings
-        [ "OS=='win'", {
-          "msvs_settings": {
-            "VCCLCompilerTool": {
-              "ExceptionHandling": 1,
-              "AdditionalOptions": ["/std:c++20"]
-            }
-          },
-          "libraries": [
-            "deps\\liboqs\\build\\lib\\oqs.lib"
           ]
         }]
       ],
