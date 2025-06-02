@@ -74,20 +74,17 @@ jobs:
           xcode-select --install || echo "Xcode tools already installed"
           brew update
           brew install ninja cmake
-
       - name: Install build tools (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential ninja-build cmake
-
       - name: Install zig for cross compilation (Linux + Windows ARM64)
         if: matrix.cross == 'true'
         run: |
           curl -L -o zig.tar.xz https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz
           tar xf zig.tar.xz
           echo "$PWD/zig-linux-x86_64-0.11.0" >> $GITHUB_PATH
-
       - name: Install dependencies
         run: npm install
 
@@ -98,9 +95,8 @@ jobs:
           else
             npm run build:package
           fi
-
   publish:
-    needs: [build, test]   # only runs after build and test finish successfully
+    needs: [build, test]
     runs-on: ubuntu-latest
     steps:
       - run: npm publish
