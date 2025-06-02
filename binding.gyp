@@ -51,7 +51,8 @@
           "msvs_settings": {
             "VCCLCompilerTool": {
               "ExceptionHandling": 1,
-              "AdditionalOptions": ["/std:c++20", "/EHsc", "/DUNICODE"]
+              "AdditionalOptions": ["/std:c++20", "/EHsc", "/DUNICODE"],
+	      "TargetMachine": "<(arch)"
             }
           },
           "libraries": [
