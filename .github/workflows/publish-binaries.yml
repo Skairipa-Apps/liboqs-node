@@ -106,7 +106,7 @@ jobs:
             if ($line -match "^(.*?)=(.*)$") {
               $name = $matches[1]
               $value = $matches[2]
-              $env:$name = $value
+              [Environment]::SetEnvironmentVariable($name, $value, "Process")
             }
           }
 
