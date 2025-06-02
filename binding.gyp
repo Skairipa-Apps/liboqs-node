@@ -28,7 +28,7 @@
               "action_name": "prebuild",
               "inputs": [],
               "outputs": ["build/prebuild.stamp"],
-              "action": ["npx", "npm", "run", "prebuild"],
+              "action": ["npm", "run", "prebuild"],
               "message": "Running prebuild script for Unix"
             }
           ]
@@ -40,7 +40,7 @@
               "action_name": "prebuild_win",
               "inputs": [],
               "outputs": ["build\\prebuild.stamp"],
-              "action": ["npx.cmd", "npm", "run", "prebuild"],
+              "action": ["npm", "run", "prebuild"],
               "message": "Running prebuild script for Windows"
             }
           ]
