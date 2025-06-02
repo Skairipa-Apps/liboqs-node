@@ -52,7 +52,7 @@
             "VCCLCompilerTool": {
               "ExceptionHandling": 1,
               "AdditionalOptions": ["/std:c++20", "/EHsc", "/DUNICODE"],
-	      "TargetMachine": "<(arch)"
+	      "TargetMachine": "<(npm_config_arch)"
             }
           },
           "libraries": [
