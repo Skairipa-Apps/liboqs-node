@@ -24,11 +24,11 @@ jobs:
           - os: ubuntu-latest
             arch: arm64
             target: linux
-            cross: false
+            cross: true
           - os: ubuntu-latest
             arch: arm
             target: linux
-            cross: false
+            cross: true
 
           # Windows builds
           - os: windows-latest
@@ -68,10 +68,10 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Xcode CLI tools and build tools (macOS)
+      - name: Install build tools (macOS)
         if: runner.os == 'macOS'
         run: |
-          xcode-select --install || echo "Xcode tools already installed"
+          xcode-select --install || echo "Xcode CLI tools already installed"
           brew update
           brew install ninja cmake
 
@@ -79,7 +79,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential ninja-build cmake
+          sudo apt-get install -y build-essential libc6-dev libc6-dev-i386 ninja-build cmake curl
 
       - name: Install Zig for cross-compilation
         if: ${{ matrix.cross }}
@@ -87,16 +87,26 @@ jobs:
           curl -L -o zig.tar.xz https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz
           tar xf zig.tar.xz
           echo "$PWD/zig-linux-x86_64-0.11.0" >> $GITHUB_PATH
+          echo "ZIG_PATH=$PWD/zig-linux-x86_64-0.11.0" >> $GITHUB_ENV
 
       - name: Install dependencies
-        run:
+        run: |
           npm install -g npm
           npm install
 
       - name: Build for ${{ matrix.os }} ${{ matrix.arch }}
         run: |
           if [[ "${{ matrix.cross }}" == "true" ]]; then
-            npm_config_arch=arm64 CC="zig cc -target aarch64-windows" npm run build:package
+            # Use Zig + musl for cross-compilation (safer than glibc)
+            if [[ "${{ matrix.target }}" == "win" ]]; then
+              CC="zig cc -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-windows || echo i386-windows)" \
+              CXX="zig c++ -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-windows || echo i386-windows)" \
+              npm run build:package
+            else
+              CC="zig cc -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)" \
+              CXX="zig c++ -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)" \
+              npm run build:package
+            fi
           else
             npm run build:package
           fi
@@ -105,6 +115,20 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Publish to npm
-        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
 
