@@ -32,7 +32,7 @@ using OQS_STATUS = C::OQS_STATUS; ///< bring OQS_STATUS into the oqs namespace
  * \brief liboqs version string
  * \return liboqs version string
  */
-inline std::string oqs_version() { return oqs::C::OQS_version(); }
+inline std::string oqs_version() { return std::string(oqs_version()); }
 
 /**
  * \brief liboqs-cpp version string

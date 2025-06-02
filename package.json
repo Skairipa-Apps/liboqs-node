@@ -1,6 +1,6 @@
 {
   "name": "@skairipaapps/liboqs-node",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Node.js bindings for liboqs.",
   "author": "Skairipa Apps Inc.",
   "license": "MIT",
@@ -9,7 +9,7 @@
   "scripts": {
     "build": "node-gyp rebuild",
     "build:all": "npm run liboqs:build && node-gyp rebuild",
-    "build:package": "npm run build:all && node-pre-gyp package",
+    "build:package": "npm run clean && npm run build:all && node-pre-gyp package",
     "docs:build": "jsdoc -c ./docs/jsdoc.json",
     "ensure_submodules": "node ./scripts/ensure_submodules.js",
     "install": "node-pre-gyp install --fallback-to-build",
