@@ -42,9 +42,10 @@
               "outputs": ["some"],
               "action": [
                 "node",
-                "<(module_root_dir)/scripts/run-npm-on-windows.js",
-                "run",
-                "prebuild"
+                "npm run prebuild"
+		#"<(module_root_dir)/scripts/run-npm-on-windows.js",
+                #"run",
+                #"prebuild"
               ],
               "working_dir": "<(module_root_dir)",
               "message": "Running prebuild script for Windows"
