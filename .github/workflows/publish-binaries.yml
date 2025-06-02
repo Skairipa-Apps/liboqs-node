@@ -61,7 +61,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
         with:
-          submodules: true  # Ensures submodules are initialized on checkout
+          submodules: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -74,29 +74,35 @@ jobs:
           xcode-select --install || echo "Xcode tools already installed"
           brew update
           brew install ninja cmake
+
       - name: Install build tools (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential ninja-build cmake
-      - name: Install zig for cross compilation (Linux + Windows ARM64)
-        if: matrix.cross == 'true'
+
+      - name: Install Zig for cross-compilation
+        if: ${{ matrix.cross }}
         run: |
           curl -L -o zig.tar.xz https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz
           tar xf zig.tar.xz
           echo "$PWD/zig-linux-x86_64-0.11.0" >> $GITHUB_PATH
+
       - name: Install dependencies
         run: npm install
 
       - name: Build for ${{ matrix.os }} ${{ matrix.arch }}
         run: |
-          if [ "${{ matrix.cross }}" = "true" ]; then
+          if [[ "${{ matrix.cross }}" == "true" ]]; then
             npm_config_arch=arm64 CC="zig cc -target aarch64-windows" npm run build:package
           else
             npm run build:package
           fi
+
   publish:
     needs: [build, test]
     runs-on: ubuntu-latest
     steps:
-      - run: npm publish
+      - name: Publish to npm
+        run: npm publish
+
