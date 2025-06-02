@@ -149,15 +149,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # Patch step only for Windows builds
-      - name: Patch Windows npm environment
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          Write-Host "Patching Windows environment for npm build..."
-          $env:Path = "$env:APPDATA\npm;$env:Path"
-          npm install -g npm@latest
-
       - name: Build for ${{ matrix.os }} ${{ matrix.arch }}
         run: |
           if [[ "${{ matrix.cross }}" == "true" ]]; then
