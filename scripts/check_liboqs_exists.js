@@ -32,3 +32,6 @@ if (!fs.existsSync(headerPath)) {
   console.log('liboqs headers found. Skipping build.');
 }
 
+module.exports = async function checkLiboqsExists() {
+  return false; // force build bundled liboqs
+};
