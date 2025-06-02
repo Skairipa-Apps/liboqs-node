@@ -11,7 +11,7 @@
         "src/Sigs.cpp"
       ],
       "include_dirs": [
-        "<!@(node -p \"require('node-addon-api').include\")",
+        "node_modules/node-addon-api",
         "./deps/liboqs/build/include",
         "./deps/liboqs-cpp/include"
       ],
