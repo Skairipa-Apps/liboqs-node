@@ -100,14 +100,16 @@ jobs:
           $vcvarsPath = Join-Path $vsPath "VC\Auxiliary\Build\vcvars64.bat"
           if (-not (Test-Path $vcvarsPath)) { throw "vcvars64.bat not found" }
           Write-Host "Found vcvars64.bat at $vcvarsPath"
-          & cmd /c `"$vcvarsPath && set`" > setvars64.txt
-          Get-Content setvars64.txt | ForEach-Object {
-            $pair = $_ -split '='
-            if ($pair.Length -eq 2) {
-              Write-Host "Setting env $($pair[0])"
-              $env:$($pair[0]) = $pair[1]
+          # Run vcvars64.bat and output environment variables
+          $envOutput = cmd /c "`"$vcvarsPath & set`""
+          foreach ($line in $envOutput) {
+            if ($line -match "^(.*?)=(.*)$") {
+              $name = $matches[1]
+              $value = $matches[2]
+              $env:$name = $value
             }
           }
+
 
       - name: Install dependencies
         run: npm install
