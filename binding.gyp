@@ -20,20 +20,21 @@
         "NAPI_VERSION=6",
         "LIBOQS_CPP_VERSION=\"0.7.1\""
       ],
-      "actions": [
-        {
-          "action_name": "prebuild",
-          "inputs": [],
-          "outputs": [""],
-          "action": [
-            "<!(node -p 'process.execPath')",
-            "<!(node -p 'require.resolve(\"npm/bin/npm-cli.js\")')",
-            "run",
-            "prebuild"
-          ],
-          "message": "Executing prebuild script"
-        }
-      ],
+"actions": [
+  {
+    "action_name": "prebuild",
+    "inputs": [],
+    "outputs": [""],
+    "action": [
+      "<!(node -p 'process.execPath')",
+      "<!(process.platform === 'win32' ? 'npx.cmd' : 'npx')",
+      "npm",
+      "run",
+      "prebuild"
+    ],
+    "message": "Executing prebuild script"
+  }
+],
       "conditions": [
         ["OS=='linux'", {
           "cflags": ["-fexceptions", "-std=c++2a"],
