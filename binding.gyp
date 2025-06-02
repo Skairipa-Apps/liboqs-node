@@ -18,16 +18,16 @@
         {
           "action_name": "prebuild",
           "inputs": [],
-    "outputs": [""],
-    "action": [
-      "<!(node -p 'process.execPath')",
-      "<!(node -p 'require.resolve(\"npm/bin/npm-cli.js\")')",
-      "run",
-      "prebuild"
-    ],
-    "message": "Executing prebuild script"
-  }
-]	
+          "outputs": [""],
+          "action": [
+            "<!(node -p 'process.execPath')",
+            "<!(node -p 'require.resolve(\"npm/bin/npm-cli.js\")')",
+            "run",
+            "prebuild"
+          ],
+          "message": "Executing prebuild script"
+        }
+      ],
       "sources": [
         "./src/addon.cpp",
         "./src/KEMs.cpp",
@@ -47,7 +47,7 @@
       "defines": [
         "NAPI_CPP_EXCEPTIONS",
         "NAPI_VERSION=6",
-	"LIBOQS_CPP_VERSION=\"0.7.1\""
+        "LIBOQS_CPP_VERSION=\"0.7.1\""
       ],
       "xcode_settings": {
         "GCC_ENABLE_CPP_EXCEPTIONS": "YES"
@@ -56,3 +56,4 @@
     }
   ]
 }
+

@@ -99,13 +99,8 @@ jobs:
             npm run build:package
           fi
 
-      - name: Publish binary to GitHub Releases
-        run: |
-          export NODE_PRE_GYP_GITHUB_TOKEN=$(cat publish-token)
-          npm run publish:draft
-
-
-      - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  publish:
+    needs: [build, test]   # only runs after build and test finish successfully
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm publish
