@@ -89,26 +89,61 @@ jobs:
           echo "$PWD/zig-linux-x86_64-0.11.0" >> $GITHUB_PATH
           echo "ZIG_PATH=$PWD/zig-linux-x86_64-0.11.0" >> $GITHUB_ENV
 
-      - name: Setup MSVC x64 environment
+      - name: Setup MSVC and build both architectures
         if: runner.os == 'Windows'
         shell: powershell
         run: |
-          Write-Host "Setting up MSVC environment for x64 build..."
+          function Setup-MsvcEnv {
+            param($vcvarsBat)
+      
+            if (-not (Test-Path $vcvarsBat)) { throw "$vcvarsBat not found" }
+            Write-Host "Running $vcvarsBat..."
+      
+            $envOutput = cmd /c "`"$vcvarsBat`" && set"
+            $envVars = @{}
+            foreach ($line in $envOutput) {
+              if ($line -match "^(.*?)=(.*)$") {
+                $name = $matches[1]
+                $value = $matches[2]
+                $envVars[$name] = $value
+              }
+            }
+            return $envVars
+          }
+      
+          Write-Host "Locating Visual Studio..."
           $vswherePath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           $vsPath = & $vswherePath -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
           if (-not $vsPath) { throw "Visual Studio not found" }
-          $vcvarsPath = Join-Path $vsPath "VC\Auxiliary\Build\vcvars64.bat"
-          if (-not (Test-Path $vcvarsPath)) { throw "vcvars64.bat not found" }
-          Write-Host "Found vcvars64.bat at $vcvarsPath"
-          # Run vcvars64.bat and output environment variables
-          $envOutput = cmd /c "`"$vcvarsPath & set`""
-          foreach ($line in $envOutput) {
-            if ($line -match "^(.*?)=(.*)$") {
-              $name = $matches[1]
-              $value = $matches[2]
-              [Environment]::SetEnvironmentVariable($name, $value, "Process")
-            }
+      
+          # 64-bit setup
+          $vcvars64 = Join-Path $vsPath "VC\Auxiliary\Build\vcvars64.bat"
+          $env64 = Setup-MsvcEnv $vcvars64
+          Write-Host "MSVC 64-bit environment set."
+      
+          # Apply 64-bit env vars to current process (for next commands)
+          foreach ($kv in $env64.GetEnumerator()) {
+            [Environment]::SetEnvironmentVariable($kv.Key, $kv.Value, "Process")
           }
+      
+          # Insert your 64-bit build commands here
+          Write-Host "Building for x64..."
+          # Example: & msbuild your_project.sln /p:Platform=x64
+      
+          # 32-bit setup
+          $vcvars32 = Join-Path $vsPath "VC\Auxiliary\Build\vcvars32.bat"
+          $env32 = Setup-MsvcEnv $vcvars32
+          Write-Host "MSVC 32-bit environment set."
+      
+          # Apply 32-bit env vars (overwrite current process vars)
+          foreach ($kv in $env32.GetEnumerator()) {
+            [Environment]::SetEnvironmentVariable($kv.Key, $kv.Value, "Process")
+          }
+      
+          # Insert your 32-bit build commands here
+          Write-Host "Building for x86..."
+          # Example: & msbuild your_project.sln /p:Platform=Win32
+
 
 
       - name: Install dependencies
