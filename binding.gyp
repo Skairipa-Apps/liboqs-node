@@ -34,17 +34,36 @@
           ]
         }],
         # Prebuild script for Windows
-        [ "OS=='win'", {
-          "actions": [
-            {
-              "action_name": "prebuild_win",
-              "inputs": [],
-              "outputs": ["build\\prebuild.stamp"],
-              "action": ["npm", "run", "prebuild"],
-              "message": "Running prebuild script for Windows"
-            }
-          ]
-        }],
+[ "OS=='win'", {
+  "actions": [
+    {
+      "action_name": "prebuild_win",
+      "inputs": [],
+      "outputs": ["build\\prebuild.stamp"],
+      "action": ["cmd", "/c", "npm run prebuild"],
+      "message": "Running prebuild script for Windows"
+    }
+  ],
+  "msvs_settings": {
+    "VCCLCompilerTool": {
+      "ExceptionHandling": 1,
+      "AdditionalOptions": ["/std:c++20", "/EHsc", "/DUNICODE"]
+    }
+  },
+  "libraries": [
+    "deps\\liboqs\\build\\lib\\oqs.lib"
+  ],
+  "defines": [
+    "NAPI_CPP_EXCEPTIONS",
+    "NAPI_VERSION=6",
+    "LIBOQS_CPP_VERSION=\\\"0.7.1\\\""
+  ],
+  "include_dirs": [
+    "<!@(node -p \"require('node-addon-api').include\")",
+    "./deps/liboqs/build/include",
+    "./deps/liboqs-cpp/include"
+  ]
+}]
         # Linux-specific compile flags
         [ "OS=='linux'", {
           "cflags": ["-fexceptions", "-std=c++2a"],
