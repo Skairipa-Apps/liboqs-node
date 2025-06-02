@@ -35,7 +35,6 @@
         }
       ],
       "conditions": [
-        // Linux
         ["OS=='linux'", {
           "cflags": ["-fexceptions", "-std=c++2a"],
           "cflags_cc": ["-fexceptions", "-std=c++2a"],
@@ -44,7 +43,6 @@
             "-loqs"
           ]
         }],
-        // macOS
         ["OS=='mac'", {
           "xcode_settings": {
             "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
@@ -56,7 +54,6 @@
             "../deps/liboqs/build/lib/liboqs.a"
           ]
         }],
-        // Windows
         ["OS=='win'", {
           "msvs_settings": {
             "VCCLCompilerTool": {
