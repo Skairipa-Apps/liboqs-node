@@ -60,17 +60,20 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          submodules: true  # Ensures submodules are initialized on checkout
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Ensure git submodules
-        run: npm run ensure_submodules
+      - name: Install Xcode CLI tools and build tools (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          xcode-select --install || echo "Xcode tools already installed"
+          brew update
+          brew install ninja cmake
 
       - name: Install build tools (Linux)
         if: runner.os == 'Linux'
@@ -85,6 +88,9 @@ jobs:
           tar xf zig.tar.xz
           echo "$PWD/zig-linux-x86_64-0.11.0" >> $GITHUB_PATH
 
+      - name: Install dependencies
+        run: npm install
+
       - name: Build for ${{ matrix.os }} ${{ matrix.arch }}
         run: |
           if [ "${{ matrix.cross }}" = "true" ]; then
@@ -93,11 +99,7 @@ jobs:
             npm run build:package
           fi
 
-      - name: Write publish-token file
-        run: echo "${{ secrets.GH_TOKEN }}" > publish-token
-
       - name: Publish binary to GitHub Releases
         run: |
           export NODE_PRE_GYP_GITHUB_TOKEN=$(cat publish-token)
           npm run publish:draft
-
