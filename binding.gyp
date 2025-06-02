@@ -27,7 +27,7 @@
             {
               "action_name": "prebuild",
               "inputs": [],
-              "outputs": [],
+              "outputs": ["some"],
               "action": ["npm", "run", "prebuild"],
               "message": "Running prebuild script for Unix"
             }
@@ -39,7 +39,7 @@
             {
               "action_name": "prebuild_win",
               "inputs": [],
-              "outputs": [],
+              "outputs": ["some"],
               "action": ["cmd", "/c", "npm run prebuild"],
               "message": "Running prebuild script for Windows"
             }
