@@ -1,3 +1,7 @@
+extern "C" {
+#include <oqs/rand_nist.h>
+}
+
 // exports.Random
 
 #include "Random.h"
@@ -8,8 +12,8 @@
 #include <napi.h>
 
 // liboqs-cpp
-#include "rand/rand.h"
-#include "common.h"
+#include "rand/rand.hpp"
+#include "common.hpp"
 
 /** @namespace Random */
 namespace Random {
@@ -118,34 +122,32 @@ namespace Random {
     if (!info[0].IsBuffer()) {
       throw Napi::TypeError::New(env, "Entropy must be a Buffer");
     }
-    // Buffer lengths are checked by oqs::rand::randombytes_nist_kat_init_256bit
+    // Buffer lengths are checked by OQS_randombytes_nist_kat_init_256bit
     const auto entropyBuffer = info[0].As<Napi::Buffer<byte>>();
     const auto entropyData = entropyBuffer.Data();
-    bytes entropyVec(entropyData, entropyData + entropyBuffer.Length());
+
     if (info.Length() >= 2) {
       if (!info[1].IsBuffer()) {
         throw Napi::TypeError::New(env, "Personalization string must be a Buffer");
       }
       const auto pstringBuffer = info[1].As<Napi::Buffer<byte>>();
       const auto pstringData = pstringBuffer.Data();
-      bytes pstringVec(pstringData, pstringData + pstringBuffer.Length());
+
       try {
-        oqs::rand::randombytes_nist_kat_init_256bit(entropyVec, pstringVec);
+        OQS_randombytes_nist_kat_init_256bit(entropyData, pstringData);
       } catch (const std::exception& ex) {
-        oqs::mem_cleanse(entropyVec);
-        oqs::mem_cleanse(pstringVec);
+        // no cleanup needed for raw pointers here, just rethrow
         throw Napi::TypeError::New(env, ex.what());
       }
-      oqs::mem_cleanse(pstringVec);
+
     } else {
       try {
-        oqs::rand::randombytes_nist_kat_init_256bit(entropyVec);
+        OQS_randombytes_nist_kat_init_256bit(entropyData, nullptr);
       } catch (const std::exception& ex) {
-        oqs::mem_cleanse(entropyVec);
         throw Napi::TypeError::New(env, ex.what());
       }
     }
-    oqs::mem_cleanse(entropyVec);
+
     return env.Undefined();
   }
 

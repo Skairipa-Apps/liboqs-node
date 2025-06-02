@@ -41,7 +41,8 @@
       ],
       "defines": [
         "NAPI_CPP_EXCEPTIONS",
-        "NAPI_VERSION=6"
+        "NAPI_VERSION=6",
+	"LIBOQS_CPP_VERSION=\"0.7.1\""
       ],
       "xcode_settings": {
         "GCC_ENABLE_CPP_EXCEPTIONS": "YES"

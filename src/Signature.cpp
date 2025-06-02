@@ -9,8 +9,8 @@
 #include <napi.h>
 
 // liboqs-cpp
-#include "oqs_cpp.h"
-#include "common.h"
+#include "oqs_cpp.hpp"
+#include "common.hpp"
 
 namespace Signature {
 
