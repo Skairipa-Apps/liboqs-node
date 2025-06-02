@@ -12,6 +12,7 @@
       ],
       "include_dirs": [
         "node_modules/node-addon-api",
+	"./deps/liboqs/include"
         "./deps/liboqs/build/include",
         "./deps/liboqs-cpp/include"
       ],
