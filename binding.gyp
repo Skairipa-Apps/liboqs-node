@@ -40,13 +40,13 @@
               "action_name": "prebuild_win",
               "inputs": [],
               "outputs": ["some"],
-"action": [
-                  "cmd",
-                  "/c",
-                  "npm", "run", "prebuild"
-                ],
-
-    "working_dir": "<(module_root_dir)",
+              "action": [
+                "node",
+                "<(module_root_dir)/scripts/run-npm-on-windows.js",
+                "run",
+                "prebuild"
+              ],
+              "working_dir": "<(module_root_dir)",
               "message": "Running prebuild script for Windows"
             }
           ],
