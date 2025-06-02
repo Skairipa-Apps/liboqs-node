@@ -43,7 +43,7 @@
 "action": [
                   "cmd",
                   "/c",
-                  "npm run prebuild"
+                  "npm", "run", "prebuild"
                 ],
               "message": "Running prebuild script for Windows"
             }
