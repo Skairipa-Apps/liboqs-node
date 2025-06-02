@@ -89,6 +89,26 @@ jobs:
           echo "$PWD/zig-linux-x86_64-0.11.0" >> $GITHUB_PATH
           echo "ZIG_PATH=$PWD/zig-linux-x86_64-0.11.0" >> $GITHUB_ENV
 
+      - name: Setup MSVC x64 environment
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          Write-Host "Setting up MSVC environment for x64 build..."
+          $vswherePath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswherePath -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
+          if (-not $vsPath) { throw "Visual Studio not found" }
+          $vcvarsPath = Join-Path $vsPath "VC\Auxiliary\Build\vcvars64.bat"
+          if (-not (Test-Path $vcvarsPath)) { throw "vcvars64.bat not found" }
+          Write-Host "Found vcvars64.bat at $vcvarsPath"
+          & cmd /c `"$vcvarsPath && set`" > setvars64.txt
+          Get-Content setvars64.txt | ForEach-Object {
+            $pair = $_ -split '='
+            if ($pair.Length -eq 2) {
+              Write-Host "Setting env $($pair[0])"
+              $env:$($pair[0]) = $pair[1]
+            }
+          }
+
       - name: Install dependencies
         run: npm install
 
