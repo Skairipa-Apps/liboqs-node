@@ -2,18 +2,24 @@
   "targets": [
     {
       "target_name": "liboqs_node",
-      "cflags": [
-        "-fexceptions",
-        "-std=c++2a"
+      "sources": [
+        "./src/addon.cpp",
+        "./src/KEMs.cpp",
+        "./src/KeyEncapsulation.cpp",
+        "./src/Random.cpp",
+        "./src/Signature.cpp",
+        "./src/Sigs.cpp"
       ],
-      "cflags_cc": [
-        "-fexceptions",
-        "-std=c++2a"
+      "include_dirs": [
+        "<!@(node -p \"require('node-addon-api').include\")",
+        "./deps/liboqs/build/include",
+        "./deps/liboqs-cpp/include"
       ],
-      "xcode_settings": {
-        "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
-        "CLANG_CXX_LIBRARY": "libc++"
-      },
+      "defines": [
+        "NAPI_CPP_EXCEPTIONS",
+        "NAPI_VERSION=6",
+        "LIBOQS_CPP_VERSION=\"0.7.1\""
+      ],
       "actions": [
         {
           "action_name": "prebuild",
@@ -28,30 +34,41 @@
           "message": "Executing prebuild script"
         }
       ],
-      "sources": [
-        "./src/addon.cpp",
-        "./src/KEMs.cpp",
-        "./src/KeyEncapsulation.cpp",
-        "./src/Random.cpp",
-        "./src/Signature.cpp",
-        "./src/Sigs.cpp"
+      "conditions": [
+        // Linux
+        ["OS=='linux'", {
+          "cflags": ["-fexceptions", "-std=c++2a"],
+          "cflags_cc": ["-fexceptions", "-std=c++2a"],
+          "libraries": [
+            "-L../deps/liboqs/build/lib",
+            "-loqs"
+          ]
+        }],
+        // macOS
+        ["OS=='mac'", {
+          "xcode_settings": {
+            "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
+            "CLANG_CXX_LIBRARY": "libc++"
+          },
+          "cflags": ["-fexceptions", "-std=c++2a"],
+          "cflags_cc": ["-fexceptions", "-std=c++2a"],
+          "libraries": [
+            "../deps/liboqs/build/lib/liboqs.a"
+          ]
+        }],
+        // Windows
+        ["OS=='win'", {
+          "msvs_settings": {
+            "VCCLCompilerTool": {
+              "ExceptionHandling": 1,
+              "AdditionalOptions": ["/std:c++20"]
+            }
+          },
+          "libraries": [
+            "deps\\liboqs\\build\\lib\\oqs.lib"
+          ]
+        }]
       ],
-      "include_dirs": [
-        "<!@(node -p \"require('node-addon-api').include\")",
-        "./deps/liboqs/build/include",
-        "./deps/liboqs-cpp/include"
-      ],
-      "libraries": [
-        "../deps/liboqs/build/lib/liboqs.a"
-      ],
-      "defines": [
-        "NAPI_CPP_EXCEPTIONS",
-        "NAPI_VERSION=6",
-        "LIBOQS_CPP_VERSION=\"0.7.1\""
-      ],
-      "xcode_settings": {
-        "GCC_ENABLE_CPP_EXCEPTIONS": "YES"
-      },
       "module_path": "./lib/binding/{platform}-{arch}/"
     }
   ]
