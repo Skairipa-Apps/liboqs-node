@@ -16,7 +16,7 @@ console.log(`Running npm command on ${process.platform}`);
 console.log(`Command: ${npmExecutable} run prebuild`);
 
 // Run npm with the provided arguments
-const result = spawnSync(npmExecutable, args, {
+const result = spawnSync(npmExecutable, {
   stdio: 'inherit',  // Forward stdio to parent process
   shell: process.platform === 'win32', // Use shell on Windows
   windowsVerbatimArguments: process.platform === 'win32', // Handle Windows arguments correctly
