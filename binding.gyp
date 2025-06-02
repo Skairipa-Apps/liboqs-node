@@ -18,11 +18,16 @@
         {
           "action_name": "prebuild",
           "inputs": [],
-          "outputs": [""],
-          "action": ["npm", "run", "prebuild"],
-          "message": "Executing prebuild script"
-        }
-      ],
+    "outputs": [""],
+    "action": [
+      "<!(node -p 'process.execPath')",
+      "<!(node -p 'require.resolve(\"npm/bin/npm-cli.js\")')",
+      "run",
+      "prebuild"
+    ],
+    "message": "Executing prebuild script"
+  }
+]	
       "sources": [
         "./src/addon.cpp",
         "./src/KEMs.cpp",

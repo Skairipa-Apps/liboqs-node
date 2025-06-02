@@ -5,6 +5,7 @@
   "author": "Skairipa Apps Inc.",
   "license": "MIT",
   "main": "lib/index.js",
+  "types": "index.d.ts",
   "scripts": {
     "build": "node-gyp rebuild",
     "build:all": "npm run liboqs:build && node-gyp rebuild",
@@ -58,7 +59,8 @@
     "chai-bytes": "^0.1.2",
     "docdash": "^1.2.0",
     "jsdoc": "^3.6.7",
-    "mocha": "^8.4.0"
+    "mocha": "^8.4.0",
+    "node-pre-gyp-github": "^2.0.0"
   },
   "engines": {
     "node": ">=12.11.0"
