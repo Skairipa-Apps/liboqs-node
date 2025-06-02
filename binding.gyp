@@ -40,7 +40,11 @@
               "action_name": "prebuild_win",
               "inputs": [],
               "outputs": ["some"],
-              "action": ["cmd", "/c", "npm run prebuild"],
+"action": [
+                  "cmd",
+                  "/c",
+                  "npm run prebuild"
+                ],
               "message": "Running prebuild script for Windows"
             }
           ],
