@@ -34,29 +34,23 @@
           ]
         }],
         # Prebuild for Windows
-        [ "OS=='win'", {
-          "actions": [
-            {
-              "action_name": "prebuild_win",
-              "inputs": [],
-              "outputs": ["some"],
-              "action": [
-                "node",
-		"<(module_root_dir)/scripts/run-npm-on-windows.js",
-              ],
-              "working_dir": "<(module_root_dir)",
-              "message": "Running prebuild script for Windows"
-            }
-          ],
+["OS=='win'", {
           "msvs_settings": {
             "VCCLCompilerTool": {
               "ExceptionHandling": 1,
-              "AdditionalOptions": ["/std:c++20", "/EHsc", "/DUNICODE"],
-	      "TargetMachine": "<!(node -p \"process.arch\")"
+              "AdditionalOptions": ["/std:c++20", "/EHsc", "/DUNICODE"]
             }
           },
           "libraries": [
             "deps\\liboqs\\build\\lib\\oqs.lib"
+          ],
+          "conditions": [
+            ["target_arch=='x64'", {
+              "defines": ["WIN64"]
+            }],
+            ["target_arch=='ia32'", {
+              "defines": ["WIN32"]
+            }]
           ]
         }],
         [ "OS=='linux'", {
