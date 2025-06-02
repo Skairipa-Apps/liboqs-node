@@ -12,11 +12,8 @@ const fs = require('fs');
 // Determine the npm executable based on platform
 const npmExecutable = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
-// Get arguments passed to this script (exclude node and script name)
-const args = process.argv.slice(2);
-
 console.log(`Running npm command on ${process.platform}`);
-console.log(`Command: ${npmExecutable} ${args.join(' ')}`);
+console.log(`Command: ${npmExecutable} run prebuild`);
 
 // Run npm with the provided arguments
 const result = spawnSync(npmExecutable, args, {
