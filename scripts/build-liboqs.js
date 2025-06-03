@@ -9,6 +9,162 @@ const rimraf = require('rimraf');
 const liboqsDir = path.join(__dirname, '..', 'deps', 'liboqs');
 const buildDir = path.join(liboqsDir, 'build');
 
+/**
+ * Patches x86-specific source files to skip them on ARM builds
+ * by wrapping the entire file content in #if guards
+ */
+function patchX86SpecificFiles(isArmBuild) {
+  if (!isArmBuild) return;
+  
+  console.log('Patching x86-specific source files for ARM build...');
+  
+  // Files that contain x86-specific code
+  const filesToPatch = [
+    {
+      path: path.join(liboqsDir, 'src', 'common', 'aes', 'aes128_ni.c'),
+      guard: `
+// This file has been patched to exclude x86-specific code on ARM
+#if !(defined(__ARM_ARCH) || defined(DISABLE_X86_INTRIN) || defined(__aarch64__) || defined(OQS_SKIP_X86_SPECIFIC))
+// Original content will be here
+#else
+// Provide ARM-compatible stubs
+#include "aes.h"
+#include <stdint.h>
+
+// Simple implementation for ARM architectures that don't support x86 intrinsics
+void AES128_ECB_ni(const uint8_t *key, const uint8_t *in, uint8_t *out) {
+    // Fallback to non-x86 implementation
+    AES128_ECB(key, in, out);
+}
+#endif
+`
+    },
+    {
+      path: path.join(liboqsDir, 'src', 'common', 'aes', 'aes256_ni.c'),
+      guard: `
+// This file has been patched to exclude x86-specific code on ARM
+#if !(defined(__ARM_ARCH) || defined(DISABLE_X86_INTRIN) || defined(__aarch64__) || defined(OQS_SKIP_X86_SPECIFIC))
+// Original content will be here
+#else
+// Provide ARM-compatible stubs
+#include "aes.h"
+#include <stdint.h>
+
+// Simple implementation for ARM architectures that don't support x86 intrinsics
+void AES256_ECB_ni(const uint8_t *key, const uint8_t *in, uint8_t *out) {
+    // Fallback to non-x86 implementation
+    AES256_ECB(key, in, out);
+}
+#endif
+`
+    }
+  ];
+
+  for (const file of filesToPatch) {
+    if (!fs.existsSync(file.path)) {
+      console.log(`File not found: ${file.path}`);
+      continue;
+    }
+    
+    let content = fs.readFileSync(file.path, 'utf8');
+    
+    // Only patch if not already patched
+    if (!content.includes('__ARM_ARCH') && !content.includes('DISABLE_X86_INTRIN')) {
+      console.log(`Patching ${path.basename(file.path)} to skip x86-specific code on ARM...`);
+      
+      // Split the guard template and insert the original content
+      const [guardStart, guardEnd] = file.guard.split('// Original content will be here');
+      content = guardStart + content + guardEnd;
+      
+      fs.writeFileSync(file.path, content);
+      console.log(`✅ Successfully patched ${path.basename(file.path)}`);
+    } else {
+      console.log(`File ${path.basename(file.path)} already patched, skipping.`);
+    }
+  }
+  
+  // Also patch CMakeLists.txt to handle x86-specific files properly
+  const cmakeListsPath = path.join(liboqsDir, 'src', 'common', 'CMakeLists.txt');
+  if (fs.existsSync(cmakeListsPath)) {
+    let cmakeContent = fs.readFileSync(cmakeListsPath, 'utf8');
+    
+    // Only patch if not already patched
+    if (!cmakeContent.includes('DISABLE_X86_INTRIN') && !cmakeContent.includes('OQS_SKIP_X86_SPECIFIC')) {
+      console.log('Patching CMakeLists.txt to improve ARM compatibility...');
+      
+      // More comprehensive modifications to the CMake file
+      let modified = false;
+      
+      // 1. Find the section that includes AES NI files and make it conditional
+      const aesNiIncludePattern = /set\(AES_IMPL\s+\${AES_IMPL}\s+aes\/aes128_ni\.c\)/;
+      if (aesNiIncludePattern.test(cmakeContent)) {
+        cmakeContent = cmakeContent.replace(
+          aesNiIncludePattern,
+          'if(NOT DEFINED OQS_SKIP_X86_SPECIFIC AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|aarch64.*)")\n      $&\n      else()\n        message(STATUS "Skipping x86-specific AES files on ${CMAKE_SYSTEM_PROCESSOR}")\n      endif()'
+        );
+        modified = true;
+      }
+      
+      // 2. Find the part that sets source properties with x86 flags
+      const setSourcePropsRegex = /set_source_files_properties\(aes\/aes\d+_ni\.c\s+PROPERTIES\s+COMPILE_FLAGS\s+"-maes\s+-mssse3"\)/g;
+      
+      if (setSourcePropsRegex.test(cmakeContent)) {
+        // Wrap the property setting in a condition
+        cmakeContent = cmakeContent.replace(
+          setSourcePropsRegex,
+          'if(NOT DEFINED OQS_SKIP_X86_SPECIFIC AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|aarch64.*)")\n      $&\n      endif()'
+        );
+        modified = true;
+      }
+        
+        // 3. Add a definition for ARM architecture
+        if (!cmakeContent.includes('OQS_SYSTEM_ARM')) {
+          const targetDefPattern = /target_compile_definitions\(common PRIVATE (.*)\)/;
+          if (targetDefPattern.test(cmakeContent)) {
+            cmakeContent = cmakeContent.replace(
+              targetDefPattern,
+              'if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|aarch64.*)")\n  target_compile_definitions(common PRIVATE OQS_SYSTEM_ARM OQS_SKIP_X86_SPECIFIC)\nelse()\n  $&\nendif()'
+            );
+            modified = true;
+          }
+        }
+        
+        if (modified) {
+          fs.writeFileSync(cmakeListsPath, cmakeContent);
+          console.log('✅ Successfully patched CMakeLists.txt');
+        } else {
+          console.log('Did not find expected patterns in CMakeLists.txt, manual patching may be required');
+        }
+      } else {
+        console.log('Did not find x86-specific flags in CMakeLists.txt, or format is different than expected');
+      }
+    } else {
+      console.log('CMakeLists.txt already patched, skipping.');
+    }
+  }
+  
+  // Also create empty stub files as fallbacks for x86-specific headers
+  const x86Headers = [
+    { name: 'wmmintrin.h', content: '// Empty stub for ARM compatibility\n#ifndef WMMINTRIN_H\n#define WMMINTRIN_H\n// This is a stub header for ARM builds\n#endif\n' },
+    { name: 'tmmintrin.h', content: '// Empty stub for ARM compatibility\n#ifndef TMMINTRIN_H\n#define TMMINTRIN_H\n// This is a stub header for ARM builds\n#endif\n' },
+    { name: 'emmintrin.h', content: '// Empty stub for ARM compatibility\n#ifndef EMMINTRIN_H\n#define EMMINTRIN_H\n// This is a stub header for ARM builds\n#endif\n' }
+  ];
+  
+  const includeDir = path.join(buildDir, 'include', 'stubs');
+  fs.mkdirSync(includeDir, { recursive: true });
+  
+  x86Headers.forEach(header => {
+    const headerPath = path.join(includeDir, header.name);
+    fs.writeFileSync(headerPath, header.content);
+    console.log(`Created stub header: ${headerPath}`);
+  });
+  
+  // Add include path for stub headers
+  process.env.CFLAGS = `${process.env.CFLAGS || ''} -I${includeDir}`;
+  process.env.CXXFLAGS = `${process.env.CXXFLAGS || ''} -I${includeDir}`;
+  console.log(`Added stub headers include path to CFLAGS/CXXFLAGS`);
+}
+
 console.log('Starting liboqs build process...');
 
 try {
@@ -131,14 +287,58 @@ try {
     console.log(`Final architecture decision: ${isArmArchitecture ? 'ARM' : 'non-ARM'}, ARM64/aarch64: ${isTargetingAarch64 ? 'Yes' : 'No'}`);
     console.log('==================================================================');
 
-    const cmakeArgs = [
+    // Force ARM architecture when cross-compiling with ARM tools
+    const forceArmArchitecture = isArmCompiler || isArmTarget;
+    const explicitCrossCompile = isArmCompiler && process.arch === 'x64';
+
+    // Set up basic cmake args
+    const cmakeArgs = [];
+    
+    // For ARM builds, add early flags to completely exclude x86-specific files
+    if (isArmArchitecture) {
+      // Force CMake to skip x86 files entirely
+      cmakeArgs.push('-DOQS_SKIP_X86_FILES=ON');
+      cmakeArgs.push('-DCMAKE_DISABLE_FIND_PACKAGE_X86=ON');
+      
+      // Add compiler definitions before any other flags
+      const skipX86Defines = [
+        '-DDISABLE_X86_INTRIN',
+        '-DOQS_NO_AES_NI=1',
+        '-DOQS_SKIP_X86_SPECIFIC=1',
+        '-D__ARM_CROSS_COMPILE=1'
+      ].join(' ');
+      
+      // Set environment variables to control compiler behavior
+      process.env.CFLAGS = `${skipX86Defines} ${process.env.CFLAGS || ''}`;
+      process.env.CXXFLAGS = `${skipX86Defines} ${process.env.CXXFLAGS || ''}`;
+      console.log(`Setting early compiler flags for ARM builds:`);
+      console.log(`CFLAGS: ${process.env.CFLAGS}`);
+      console.log(`CXXFLAGS: ${process.env.CXXFLAGS}`);
+    }
+    
+    // Add standard CMake args
+    cmakeArgs.push(
       '-DBUILD_SHARED_LIBS=OFF',
       '-DCMAKE_BUILD_TYPE=Release',
       '-DOQS_BUILD_ONLY_LIB=ON',
       '-DOQS_USE_OPENSSL=ON',
       '-DOQS_DIST_BUILD=ON',
       '-GNinja'
-    ];
+    );
+    
+    // Add cross-compilation setup if needed
+    if (explicitCrossCompile) {
+      console.log('Setting up explicit cross-compilation for ARM...');
+      cmakeArgs.push('-DCMAKE_CROSSCOMPILING=ON');
+      cmakeArgs.push('-DCMAKE_SYSTEM_NAME=Linux');
+      cmakeArgs.push('-DCMAKE_SYSTEM_VERSION=1');
+      
+      // Set explicit compilers if using ARM compiler
+      if (ccCompiler && ccCompiler.includes('arm-linux-gnueabihf')) {
+        cmakeArgs.push('-DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc');
+        cmakeArgs.push('-DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++');
+      }
+    }
 
     if (isArmArchitecture) {
       console.log('============== Configuring for ARM Architecture ==============');
@@ -159,6 +359,11 @@ try {
       cmakeArgs.push('-DOQS_ENABLE_AVX512=OFF');
       cmakeArgs.push('-DOQS_ENABLE_PCLMULQDQ=OFF');
       
+      // Force ARM build configuration
+      if (forceArmArchitecture) {
+        cmakeArgs.push('-DOQS_ARM_BUILD=ON');
+      }
+      
       // Set the system processor explicitly to prevent auto-detection issues
       if (isTargetingAarch64) {
         console.log('Setting system processor to aarch64');
@@ -172,9 +377,30 @@ try {
         cmakeArgs.push('-DCMAKE_SYSTEM_PROCESSOR=arm');
       }
       
+      // Add compile definitions to skip x86-specific files
+      if (explicitCrossCompile || isArmCompiler) {
+        const armDefines = [
+          '-DDISABLE_X86_INTRIN',
+          '-DOQS_NO_AES_NI',
+          '-DOQS_SKIP_X86_SPECIFIC=1',
+          '-D__ARM_CROSS_COMPILE=1'
+        ].join(' ');
+        
+        // Add to both C and CXX flags
+        process.env.CFLAGS = `${process.env.CFLAGS || ''} ${armDefines}`;
+        process.env.CXXFLAGS = `${process.env.CXXFLAGS || ''} ${armDefines}`;
+        
+        console.log('Setting ARM-specific environment variables:');
+        console.log(`CFLAGS: ${process.env.CFLAGS}`);
+        console.log(`CXXFLAGS: ${process.env.CXXFLAGS}`);
+      }
+      
       // Explicitly disable any compiler flags that might cause issues on ARM
       cmakeArgs.push('-DCMAKE_C_FLAGS_INIT=-DDISABLE_X86_INTRIN');
       cmakeArgs.push('-DCMAKE_CXX_FLAGS_INIT=-DDISABLE_X86_INTRIN');
+      
+      // Patch x86-specific source files to skip them on ARM builds
+      patchX86SpecificFiles(true);
       
       // For ARM64, enable ARM-specific optimizations
       if (isTargetingAarch64) {
@@ -314,34 +540,65 @@ try {
 
     try {
       // Add special handling for ARM64/aarch64 builds
-      if (isTargetingAarch64) {
-        console.log('⚠️ Using ARM64/aarch64 build configuration');
-        console.log('⚠️ This will explicitly disable ARMv7-specific flags that are incompatible with aarch64');
-        
-        // Check compiler compatibility
-        if (ccCompiler && ccCompiler.includes('aarch64')) {
-          console.log('✅ Detected aarch64 compiler: ' + ccCompiler);
+      // Add special handling for ARM builds
+      if (isArmArchitecture) {
+        if (isTargetingAarch64) {
+          console.log('⚠️ Using ARM64/aarch64 build configuration');
+          console.log('⚠️ This will explicitly disable ARMv7-specific flags that are incompatible with aarch64');
           
-          // For cross-compilation with aarch64-linux-gnu-gcc
-          if (ccCompiler.includes('aarch64-linux-gnu')) {
-            console.log('⚠️ Cross-compiling with aarch64-linux-gnu-gcc - using minimal flags');
+          // Check compiler compatibility
+          if (ccCompiler && ccCompiler.includes('aarch64')) {
+            console.log('✅ Detected aarch64 compiler: ' + ccCompiler);
             
-            // Handle cross-compilation environment
-            cmakeArgs.push('-DCMAKE_CROSSCOMPILING=ON');
-            
-            // Remove any potentially problematic flags from the command line
-            for (let i = 0; i < cmakeArgs.length; i++) {
-              if (cmakeArgs[i].includes('-march=') || 
-                  cmakeArgs[i].includes('-mfpu=') || 
-                  cmakeArgs[i].includes('-fno-integrated-as')) {
-                console.log(`⚠️ Removing potentially problematic flag: ${cmakeArgs[i]}`);
-                cmakeArgs.splice(i, 1);
-                i--;
+            // For cross-compilation with aarch64-linux-gnu-gcc
+            if (ccCompiler.includes('aarch64-linux-gnu')) {
+              console.log('⚠️ Cross-compiling with aarch64-linux-gnu-gcc - using minimal flags');
+              
+              // Handle cross-compilation environment
+              cmakeArgs.push('-DCMAKE_CROSSCOMPILING=ON');
+              
+              // Remove any potentially problematic flags from the command line
+              for (let i = 0; i < cmakeArgs.length; i++) {
+                if (cmakeArgs[i].includes('-march=') || 
+                    cmakeArgs[i].includes('-mfpu=') || 
+                    cmakeArgs[i].includes('-fno-integrated-as')) {
+                  console.log(`⚠️ Removing potentially problematic flag: ${cmakeArgs[i]}`);
+                  cmakeArgs.splice(i, 1);
+                  i--;
+                }
               }
             }
+          } else if (ccCompiler) {
+            console.log('⚠️ Warning: Using non-aarch64 compiler for ARM64 build: ' + ccCompiler);
           }
-        } else if (ccCompiler) {
-          console.log('⚠️ Warning: Using non-aarch64 compiler for ARM64 build: ' + ccCompiler);
+        } else if (isArmCompiler) {
+          console.log('⚠️ Cross-compiling for ARM with compiler: ' + ccCompiler);
+          
+          // Create a simple preprocessor header to exclude x86-specific code
+          const skipX86Header = path.join(buildDir, 'skip_x86.h');
+          console.log(`Creating helper header at ${skipX86Header} to skip x86-specific code`);
+          
+          const headerContent = `
+#ifndef SKIP_X86_H
+#define SKIP_X86_H
+
+// This header is automatically generated to skip x86-specific code during ARM builds
+#define DISABLE_X86_INTRIN
+#define OQS_NO_AES_NI
+#define OQS_SKIP_X86_SPECIFIC 1
+
+#endif // SKIP_X86_H
+`;
+          
+          try {
+            fs.writeFileSync(skipX86Header, headerContent);
+            console.log('Successfully created helper header');
+            
+            // Add the directory containing the header to include path
+            cmakeArgs.push(`-DCMAKE_C_FLAGS=-I${buildDir} -DOQS_NO_AES_NI=1 -DOQS_SKIP_X86_SPECIFIC=1`);
+          } catch (error) {
+            console.error('Failed to create helper header:', error);
+          }
         }
       }
       
@@ -410,16 +667,21 @@ try {
             console.error('3. Use only ARM64-compatible flags');
             console.error('4. Check if your compiler is properly installed and supports the target architecture');
             console.error('\nTo override compiler flags, you can try:');
-            console.error('export CFLAGS="-march=armv8-a+crypto -fPIC"');
-            console.error('export CXXFLAGS="-march=armv8-a+crypto -fPIC"');
+            console.error('export CFLAGS="-fPIC -DOQS_NO_AES_NI=1 -DOQS_SKIP_X86_SPECIFIC=1"');
+            console.error('export CXXFLAGS="-fPIC -DOQS_NO_AES_NI=1 -DOQS_SKIP_X86_SPECIFIC=1"');
             console.error('npm run liboqs:build');
           } else {
             console.error('\nFor ARMv7 compilation:');
             console.error('The compiler error usually involves flags like -maes or -mssse3 which are x86-specific.\n');
-            console.error('Try manually applying a patch to liboqs source files to remove x86-specific flags:');
-            console.error('1. Edit deps/liboqs/src/common/CMakeLists.txt');
-            console.error('2. Find the lines with set_source_files_properties(...) that use -maes or -mssse3');
-            console.error('3. Modify those lines to be conditional on architecture (e.g., if NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch64")');
+            console.error('Try one of these options:');
+            console.error('\nOption 1: Modify the source code to skip x86-specific files:');
+            console.error('1. Edit deps/liboqs/src/common/aes/aes128_ni.c');
+            console.error('2. Add at the beginning of the file:');
+            console.error('#if !defined(DISABLE_X86_INTRIN) && !defined(__ARM_ARCH)');
+            console.error('3. Add at the end of the file: #endif');
+            console.error('\nOption 2: Set environment variables to skip x86 code:');
+            console.error('export CFLAGS="-DOQS_NO_AES_NI=1 -DOQS_SKIP_X86_SPECIFIC=1"');
+            console.error('export CXXFLAGS="-DOQS_NO_AES_NI=1 -DOQS_SKIP_X86_SPECIFIC=1"');
           }
           
           console.error('\nAlternatively, you can try using a pre-built binary for your platform if available.\n');
