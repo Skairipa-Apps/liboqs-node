@@ -167,7 +167,7 @@ jobs:
           if [[ "${{ matrix.arch }}" == "arm" || "${{ matrix.arch }}" == "arm64" ]]; then
             CC="zig cc -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)" \
             CXX="zig c++ -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)" \
-            npm run build:package
+            npm install -g rimraf
           fi
           npm install
 
