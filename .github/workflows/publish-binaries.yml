@@ -163,7 +163,13 @@ jobs:
           Write-Host "Building for x86..."
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          if [[ "${{ matrix.arch }}" == "arm" || "${{ matrix.arch }}" == "arm64" ]]; then
+            CC="zig cc -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)" \
+            CXX="zig c++ -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)" \
+            npm run build:package
+          fi
+          npm install
 
       - name: Build for ${{ matrix.os }} ${{ matrix.arch }}
         run: |
