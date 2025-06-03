@@ -94,7 +94,7 @@ try {
 
     if (isArmLinux || isAarch64) {
 
-  log('ARM architecture detected - disabling x86 optimizations');
+  console.log('ARM architecture detected - disabling x86 optimizations');
   cmakeArgs.push('-DOQS_DISABLE_X86=ON');
   cmakeArgs.push('-DCMAKE_C_FLAGS=-march=armv8-a');
   cmakeArgs.push('-DCMAKE_CXX_FLAGS=-march=armv8-a');
