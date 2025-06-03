@@ -30,44 +30,86 @@ try {
   console.log('Changing to build directory...');
   process.chdir(buildDir);
 
-  // Step 5: Run cmake with the correct options
-  console.log('Running cmake...');
-  const cmakeArgs = [
-    '-DBUILD_SHARED_LIBS=OFF',
-    '-DCMAKE_BUILD_TYPE=Release',
-    '-DOQS_BUILD_ONLY_LIB=ON',
-    '-DOQS_USE_OPENSSL=ON',
-    '-DOQS_DIST_BUILD=ON',
-    '-GNinja',
-    '..'
-  ];
+// Step 5: Detect platform and run the appropriate build commands
+  if (process.platform === 'win32') {
+    console.log('Detected Windows platform - using Visual Studio generator');
 
-  const cmakeResult = spawnSync('cmake', cmakeArgs, { 
-    stdio: 'inherit',
-    shell: process.platform === 'win32' // Use shell on Windows
-  });
+    // Run cmake with Visual Studio generator
+    const cmakeArgs = [
+      '-DBUILD_SHARED_LIBS=OFF',
+      '-DCMAKE_BUILD_TYPE=Release',
+      '-DOQS_BUILD_ONLY_LIB=ON',
+      '-DOQS_USE_OPENSSL=ON',
+      '-DOQS_DIST_BUILD=ON',
+      '-G',
+      'Visual Studio 17 2022', // or adjust to your VS version, e.g. "Visual Studio 16 2019"
+      '..'
+    ];
 
-  if (cmakeResult.error) {
-    throw new Error(`Failed to run cmake: ${cmakeResult.error.message}`);
-  }
+    const cmakeResult = spawnSync('cmake', cmakeArgs, {
+      stdio: 'inherit',
+      shell: true,
+    });
 
-  if (cmakeResult.status !== 0) {
-    throw new Error(`cmake process exited with code ${cmakeResult.status}`);
-  }
+    if (cmakeResult.error) {
+      throw new Error(`Failed to run cmake: ${cmakeResult.error.message}`);
+    }
+    if (cmakeResult.status !== 0) {
+      throw new Error(`cmake process exited with code ${cmakeResult.status}`);
+    }
 
-  // Step 6: Run ninja to build
-  console.log('Running ninja to build liboqs...');
-  const ninjaResult = spawnSync('ninja', [], {
-    stdio: 'inherit',
-    shell: process.platform === 'win32' // Use shell on Windows
-  });
+    // Build the solution using cmake --build
+    console.log('Building with MSBuild...');
+    const buildResult = spawnSync('cmake', ['--build', '.', '--config', 'Release'], {
+      stdio: 'inherit',
+      shell: true,
+    });
 
-  if (ninjaResult.error) {
-    throw new Error(`Failed to run ninja: ${ninjaResult.error.message}`);
-  }
+    if (buildResult.error) {
+      throw new Error(`Failed to build liboqs: ${buildResult.error.message}`);
+    }
+    if (buildResult.status !== 0) {
+      throw new Error(`Build process exited with code ${buildResult.status}`);
+    }
+  } else {
+    console.log('Detected Unix-like platform - using Ninja generator');
 
-  if (ninjaResult.status !== 0) {
-    throw new Error(`ninja process exited with code ${ninjaResult.status}`);
+    // Run cmake with Ninja generator
+    const cmakeArgs = [
+      '-DBUILD_SHARED_LIBS=OFF',
+      '-DCMAKE_BUILD_TYPE=Release',
+      '-DOQS_BUILD_ONLY_LIB=ON',
+      '-DOQS_USE_OPENSSL=ON',
+      '-DOQS_DIST_BUILD=ON',
+      '-GNinja',
+      '..'
+    ];
+
+    const cmakeResult = spawnSync('cmake', cmakeArgs, {
+      stdio: 'inherit',
+      shell: false,
+    });
+
+    if (cmakeResult.error) {
+      throw new Error(`Failed to run cmake: ${cmakeResult.error.message}`);
+    }
+    if (cmakeResult.status !== 0) {
+      throw new Error(`cmake process exited with code ${cmakeResult.status}`);
+    }
+
+    // Run ninja to build
+    console.log('Running ninja to build liboqs...');
+    const ninjaResult = spawnSync('ninja', [], {
+      stdio: 'inherit',
+      shell: false,
+    });
+
+    if (ninjaResult.error) {
+      throw new Error(`Failed to run ninja: ${ninjaResult.error.message}`);
+    }
+    if (ninjaResult.status !== 0) {
+      throw new Error(`ninja process exited with code ${ninjaResult.status}`);
+    }
   }
 
   console.log('liboqs build completed successfully');
@@ -75,4 +117,3 @@ try {
   console.error('Error building liboqs:', error.message);
   process.exit(1);
 }
-
