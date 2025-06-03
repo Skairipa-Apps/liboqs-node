@@ -36,24 +36,33 @@
         }],
         # Prebuild for Windows
 ["OS=='win'", {
-          "msvs_settings": {
-            "VCCLCompilerTool": {
-              "ExceptionHandling": 1,
-              "AdditionalOptions": ["/std:c++20", "/EHsc", "/DUNICODE"]
-            }
-          },
-          "libraries": [
-            "deps\\liboqs\\build\\lib\\oqs.lib"
-          ],
-          "conditions": [
-            ["target_arch=='x64'", {
-              "defines": ["WIN64"]
-            }],
-            ["target_arch=='ia32'", {
-              "defines": ["WIN32"]
-            }]
-          ]
-        }],
+  "msvs_settings": {
+    "VCCLCompilerTool": {
+      "ExceptionHandling": 1,
+      "AdditionalOptions": [
+        "/std:c++20",
+        "/EHsc",
+        "/DUNICODE"
+      ],
+      "AdditionalIncludeDirectories": [
+        "deps\\liboqs\\include",
+        "deps\\liboqs\\build\\include",
+        "deps\\liboqs-cpp\\include"
+      ]
+    }
+  },
+  "libraries": [
+    "deps\\liboqs\\build\\lib\\oqs.lib"
+  ],
+  "conditions": [
+    ["target_arch=='x64'", {
+      "defines": ["WIN64"]
+    }],
+    ["target_arch=='ia32'", {
+      "defines": ["WIN32"]
+    }]
+  ]
+}],
         [ "OS=='linux'", {
           "cflags": ["-fexceptions", "-std=c++20"],
           "cflags_cc": ["-fexceptions", "-std=c++20"],
