@@ -80,15 +80,22 @@ if (buildResult.status !== 0) {
     console.log('Detected Unix-like platform - using Ninja generator');
 
     // Run cmake with Ninja generator
-    const cmakeArgs = [
-      '-DBUILD_SHARED_LIBS=OFF',
-      '-DCMAKE_BUILD_TYPE=Release',
-      '-DOQS_BUILD_ONLY_LIB=ON',
-      '-DOQS_USE_OPENSSL=ON',
-      '-DOQS_DIST_BUILD=ON',
-      '-GNinja',
-      '..'
-    ];
+const isArmLinux = process.platform === 'linux' && process.arch.startsWith('arm');
+
+const cmakeArgs = [
+  '-DBUILD_SHARED_LIBS=OFF',
+  '-DCMAKE_BUILD_TYPE=Release',
+  '-DOQS_BUILD_ONLY_LIB=ON',
+  '-DOQS_USE_OPENSSL=ON',
+  '-DOQS_DIST_BUILD=ON',
+  '-GNinja',
+  '..'
+];
+
+if (isArmLinux) {
+  cmakeArgs.push('-DCMAKE_C_FLAGS=-march=armv8-a');
+  cmakeArgs.push('-DCMAKE_CXX_FLAGS=-march=armv8-a');
+}
 
     const cmakeResult = spawnSync('cmake', cmakeArgs, {
       stdio: 'inherit',
