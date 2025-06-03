@@ -1,6 +1,6 @@
 {
   "name": "@skairipaapps/liboqs-node",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "Node.js bindings for liboqs.",
   "author": "Skairipa Apps Inc.",
   "license": "MIT",
@@ -50,7 +50,7 @@
   ],
   "dependencies": {
     "bindings": "^1.5.0",
-    "node-addon-api": "^3.2.1",
+    "node-addon-api": "^8.3.1",
     "node-pre-gyp": "^0.17.0"
   },
   "devDependencies": {
