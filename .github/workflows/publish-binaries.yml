@@ -169,6 +169,10 @@ jobs:
             CXX="zig c++ -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)" \
             npm install -g rimraf
           fi
+          if [[ "${{ runner.arch }}" == "ARM" || "${{ runner.arch }}" == "ARM64" ]]; then
+            echo "ARM detected, patching build to disable AES-NI"
+            export CMAKE_FLAGS="-DOQS_ENABLE_AESNI=OFF"
+          fi
           npm install
 
       - name: Build for ${{ matrix.os }} ${{ matrix.arch }}
