@@ -80,6 +80,25 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential g++ libc6-dev libc6-dev-i386 ninja-build cmake curl g++-13
+
+      - name: Install Linux ARM cross compiler
+        if: matrix.cross && matrix.arch == 'arm'
+        run: sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+      
+      - name: Install Linux ARM64 cross compiler
+        if: matrix.cross && matrix.arch == 'arm64'
+        run: sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+      
+      - name: Set CC/CXX environment variables
+        if: matrix.cross
+        run: |
+          if [ "${{ matrix.arch }}" = "arm" ]; then
+            echo "CC=arm-linux-gnueabihf-gcc" >> $GITHUB_ENV
+            echo "CXX=arm-linux-gnueabihf-g++" >> $GITHUB_ENV
+          elif [ "${{ matrix.arch }}" = "arm64" ]; then
+            echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+            echo "CXX=aarch64-linux-gnu-g++" >> $GITHUB_ENV
+          fi
       
       - name: Install build tools (Windows)
         if: runner.os == 'Windows'
