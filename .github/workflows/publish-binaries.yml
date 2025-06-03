@@ -136,12 +136,12 @@ jobs:
           }
 
           Write-Host "Locating Visual Studio..."
-swhere.exe"
+          $vswherePath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           $vsPath = & $vswherePath -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
           if (-not $vsPath) { throw "Visual Studio not found" }
 
           # 64-bit setup
-cvars64.bat"
+          $vcvars64 = Join-Path $vsPath "VC\Auxiliary\Build\vcvars64.bat"
           $env64 = Setup-MsvcEnv $vcvars64
           Write-Host "MSVC 64-bit environment set."
 
@@ -152,7 +152,7 @@ cvars64.bat"
           Write-Host "Building for x64..."
 
           # 32-bit setup
-cvars32.bat"
+          $vcvars32 = Join-Path $vsPath "VC\Auxiliary\Build\vcvars32.bat"
           $env32 = Setup-MsvcEnv $vcvars32
           Write-Host "MSVC 32-bit environment set."
 
@@ -169,9 +169,13 @@ cvars32.bat"
         run: |
           if [[ "${{ matrix.cross }}" == "true" ]]; then
             if [[ "${{ matrix.target }}" == "win" ]]; then
-              CC="zig cc -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-windows || echo i386-windows)"               CXX="zig c++ -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-windows || echo i386-windows)"               npm run build:package
+              CC="zig cc -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-windows || echo i386-windows)" \
+              CXX="zig c++ -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-windows || echo i386-windows)" \
+              npm run build:package
             else
-              CC="zig cc -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)"               CXX="zig c++ -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)"               npm run build:package
+              CC="zig cc -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)" \
+              CXX="zig c++ -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)" \
+              npm run build:package
             fi
           else
             npm run build:package
@@ -196,4 +200,3 @@ cvars32.bat"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public
-
