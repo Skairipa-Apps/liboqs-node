@@ -116,31 +116,30 @@ void AES256_ECB_ni(const uint8_t *key, const uint8_t *in, uint8_t *out) {
         );
         modified = true;
       }
-        
-        // 3. Add a definition for ARM architecture
-        if (!cmakeContent.includes('OQS_SYSTEM_ARM')) {
-          const targetDefPattern = /target_compile_definitions\(common PRIVATE (.*)\)/;
-          if (targetDefPattern.test(cmakeContent)) {
-            cmakeContent = cmakeContent.replace(
-              targetDefPattern,
-              'if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|aarch64.*)")\n  target_compile_definitions(common PRIVATE OQS_SYSTEM_ARM OQS_SKIP_X86_SPECIFIC)\nelse()\n  $&\nendif()'
-            );
-            modified = true;
-          }
+      
+      // 3. Add a definition for ARM architecture
+      if (!cmakeContent.includes('OQS_SYSTEM_ARM')) {
+        const targetDefPattern = /target_compile_definitions\(common PRIVATE (.*)\)/;
+        if (targetDefPattern.test(cmakeContent)) {
+          cmakeContent = cmakeContent.replace(
+            targetDefPattern,
+            'if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|aarch64.*)")\n  target_compile_definitions(common PRIVATE OQS_SYSTEM_ARM OQS_SKIP_X86_SPECIFIC)\nelse()\n  $&\nendif()'
+          );
+          modified = true;
         }
-        
-        if (modified) {
-          fs.writeFileSync(cmakeListsPath, cmakeContent);
-          console.log('✅ Successfully patched CMakeLists.txt');
-        } else {
-          console.log('Did not find expected patterns in CMakeLists.txt, manual patching may be required');
-        }
+      }
+      
+      if (modified) {
+        fs.writeFileSync(cmakeListsPath, cmakeContent);
+        console.log('✅ Successfully patched CMakeLists.txt');
       } else {
-        console.log('Did not find x86-specific flags in CMakeLists.txt, or format is different than expected');
+        console.log('Did not find expected patterns in CMakeLists.txt, manual patching may be required');
       }
     } else {
-      console.log('CMakeLists.txt already patched, skipping.');
+      console.log('Did not find x86-specific flags in CMakeLists.txt, or format is different than expected');
     }
+  } else {
+    console.log('CMakeLists.txt not found, skipping.');
   }
   
   // Also create empty stub files as fallbacks for x86-specific headers
@@ -155,8 +154,12 @@ void AES256_ECB_ni(const uint8_t *key, const uint8_t *in, uint8_t *out) {
   
   x86Headers.forEach(header => {
     const headerPath = path.join(includeDir, header.name);
-    fs.writeFileSync(headerPath, header.content);
-    console.log(`Created stub header: ${headerPath}`);
+    try {
+      fs.writeFileSync(headerPath, header.content);
+      console.log(`Created stub header: ${headerPath}`);
+    } catch (error) {
+      console.error(`Failed to create stub header: ${headerPath}`, error);
+    }
   });
   
   // Add include path for stub headers
@@ -164,8 +167,7 @@ void AES256_ECB_ni(const uint8_t *key, const uint8_t *in, uint8_t *out) {
   process.env.CXXFLAGS = `${process.env.CXXFLAGS || ''} -I${includeDir}`;
   console.log(`Added stub headers include path to CFLAGS/CXXFLAGS`);
 }
-
-console.log('Starting liboqs build process...');
+console.log('Starting liboqs build process... (syntax fixed)');
 
 try {
   // Step 1: Change to the liboqs directory
@@ -698,6 +700,6 @@ try {
   console.log('liboqs build completed successfully');
 } catch (error) {
   console.error('Error building liboqs:', error.message);
+  console.error('Please check build configuration and try again.');
   process.exit(1);
 }
-
