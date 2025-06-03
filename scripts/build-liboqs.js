@@ -89,6 +89,7 @@ try {
       '-DOQS_USE_OPENSSL=ON',
       '-DOQS_DIST_BUILD=ON',
       '-GNinja',
+      '-DOQS_ENABLE_AESNI=OFF'
     ];
 
     if (isArmLinux || isAarch64) {
