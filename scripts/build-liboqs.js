@@ -79,8 +79,18 @@ try {
   } else {
     console.log('Detected Unix-like platform - using Ninja generator');
 
+    // Enhanced architecture detection with detailed logging
     const isArmLinux = process.platform === 'linux' && process.arch.startsWith('arm');
     const isAarch64 = process.arch === 'arm64' || process.arch === 'aarch64';
+    const isArmArchitecture = isArmLinux || isAarch64;
+    const isX86_64 = process.arch === 'x64';
+    
+    // Detailed system information logging for debugging
+    console.log('==================== Build System Information ====================');
+    console.log(`Platform: ${process.platform}, Architecture: ${process.arch}`);
+    console.log(`Node.js version: ${process.version}`);
+    console.log(`Detected: ${isArmArchitecture ? 'ARM' : 'non-ARM'} architecture, ARM64: ${isAarch64 ? 'Yes' : 'No'}`);
+    console.log('==================================================================');
 
     const cmakeArgs = [
       '-DBUILD_SHARED_LIBS=OFF',
@@ -88,44 +98,170 @@ try {
       '-DOQS_BUILD_ONLY_LIB=ON',
       '-DOQS_USE_OPENSSL=ON',
       '-DOQS_DIST_BUILD=ON',
-      '-GNinja',
-      '-DOQS_ENABLE_AESNI=OFF'
+      '-GNinja'
     ];
 
-    if (isArmLinux || isAarch64) {
-
-  console.log('ARM architecture detected - disabling x86 optimizations');
-  cmakeArgs.push('-DOQS_DISABLE_X86=ON');
-  cmakeArgs.push('-DCMAKE_C_FLAGS=-march=armv8-a');
-  cmakeArgs.push('-DCMAKE_CXX_FLAGS=-march=armv8-a');
+    if (isArmArchitecture) {
+      console.log('============== Configuring for ARM Architecture ==============');
+      
+      // Explicitly disable ALL x86-specific optimizations and features
+      cmakeArgs.push('-DOQS_DIST_X86_64_BUILD=OFF');
+      cmakeArgs.push('-DOQS_USE_AES_INSTRUCTIONS=OFF');
+      cmakeArgs.push('-DOQS_DISABLE_X86=ON');
+      
+      // Additional x86 disabling to ensure no x86 instructions are used
+      cmakeArgs.push('-DOQS_SPEED_USE_AES_NI=OFF');
+      cmakeArgs.push('-DOQS_USE_X86_64_BUILD=OFF');
+      cmakeArgs.push('-DOQS_ENABLE_AES_NI=OFF');
+      cmakeArgs.push('-DOQS_ENABLE_SSSE3=OFF');
+      cmakeArgs.push('-DOQS_ENABLE_SSE2=OFF');
+      cmakeArgs.push('-DOQS_ENABLE_AVX=OFF');
+      cmakeArgs.push('-DOQS_ENABLE_AVX2=OFF');
+      cmakeArgs.push('-DOQS_ENABLE_AVX512=OFF');
+      cmakeArgs.push('-DOQS_ENABLE_PCLMULQDQ=OFF');
+      
+      // Set the system processor explicitly to prevent auto-detection issues
+      if (isAarch64) {
+        cmakeArgs.push('-DCMAKE_SYSTEM_PROCESSOR=aarch64');
+      } else {
+        cmakeArgs.push('-DCMAKE_SYSTEM_PROCESSOR=arm');
+      }
+      
+      // For ARM64, enable ARM-specific optimizations
+      if (isAarch64) {
+        console.log('ARM64 architecture detected - enabling ARM64-specific optimizations');
+        cmakeArgs.push('-DOQS_DIST_ARM64_V8_BUILD=ON');
+        cmakeArgs.push('-DOQS_USE_ARM_AES_INSTRUCTIONS=ON');
+        
+        // ARM64-specific compiler flags
+        if (process.platform === 'darwin') {
+          // macOS/Apple Silicon specific flags
+          console.log('Configuring for Apple Silicon (ARM64)');
+          cmakeArgs.push('-DCMAKE_C_FLAGS=-arch arm64');
+          cmakeArgs.push('-DCMAKE_CXX_FLAGS=-arch arm64');
+        } else {
+          // Linux ARM64 specific flags - explicitly avoid any x86 instructions
+          console.log('Configuring for Linux ARM64');
+          // The +crypto suffix enables hardware crypto extensions if available
+          const armFlags = [
+            '-march=armv8-a+crypto',
+            '-fno-integrated-as',
+            '-fPIC',
+            '-mfpu=neon-fp-armv8',
+            '-mneon-for-64bits',
+            '-D__ARM_FEATURE_CRYPTO',
+            // Explicitly disable x86 instructions in compiler flags
+            '-D__DISABLE_AES__',
+            '-D__DISABLE_SSSE3__',
+            '-DDISABLE_X86_INTRIN'
+          ].join(' ');
+          
+          cmakeArgs.push(`-DCMAKE_C_FLAGS=${armFlags}`);
+          cmakeArgs.push(`-DCMAKE_CXX_FLAGS=${armFlags}`);
+        }
+      } else {
+        // Non-ARM64 ARM architecture (e.g., armv7)
+        console.log('ARM (non-ARM64) architecture detected');
+        const armv7Flags = [
+          '-march=armv7-a',
+          '-fno-integrated-as',
+          '-fPIC',
+          '-mfpu=neon',
+          // Explicitly disable x86 instructions in compiler flags
+          '-D__DISABLE_AES__',
+          '-D__DISABLE_SSSE3__',
+          '-DDISABLE_X86_INTRIN'
+        ].join(' ');
+        
+        cmakeArgs.push(`-DCMAKE_C_FLAGS=${armv7Flags}`);
+        cmakeArgs.push(`-DCMAKE_CXX_FLAGS=${armv7Flags}`);
+      }
+      console.log('==================================================================');
+    } else {
+      // For x86/x64 platforms
+      console.log('============= Configuring for x86/x64 Architecture =============');
+      cmakeArgs.push('-DOQS_DIST_X86_64_BUILD=ON');
+      cmakeArgs.push('-DOQS_USE_AES_INSTRUCTIONS=ON');
+      cmakeArgs.push('-DCMAKE_SYSTEM_PROCESSOR=x86_64');
+      console.log('==================================================================');
     }
 
     cmakeArgs.push('..');
 
-    const cmakeResult = spawnSync('cmake', cmakeArgs, {
-      stdio: 'inherit',
-      shell: false,
-    });
+    // Print the complete CMake command for debugging
+    console.log('Running CMake with args:', cmakeArgs.join(' '));
 
-    if (cmakeResult.error) {
-      throw new Error(`Failed to run cmake: ${cmakeResult.error.message}`);
-    }
-    if (cmakeResult.status !== 0) {
-      throw new Error(`cmake process exited with code ${cmakeResult.status}`);
+    try {
+      const cmakeResult = spawnSync('cmake', cmakeArgs, {
+        stdio: 'inherit',
+        shell: false,
+      });
+
+      if (cmakeResult.error) {
+        console.error('CMake error details:', cmakeResult.error);
+        throw new Error(`Failed to run cmake: ${cmakeResult.error.message}`);
+      }
+      
+      if (cmakeResult.status !== 0) {
+        throw new Error(`cmake process exited with code ${cmakeResult.status}`);
+      }
+    } catch (error) {
+      console.error('CMake configuration failed. See error details above.');
+      console.error('This might be due to architecture-specific flags incompatibility.');
+      
+      // Create a patch to fix CMakeLists.txt if we're on ARM and encounter issues
+      if (isArmArchitecture) {
+        console.error('\nTrying to check if we can fix the issue automatically...');
+        
+        try {
+          // Look for common files that might need patching
+          const commonCMakeListsPath = path.join(liboqsDir, 'src', 'common', 'CMakeLists.txt');
+          
+          if (fs.existsSync(commonCMakeListsPath)) {
+            console.log('Found src/common/CMakeLists.txt file, checking for x86-specific flags...');
+            // If needed, we could implement automatic patching of the file here
+            console.log('Manual patching may be required. See error messages for instructions.');
+          }
+        } catch (checkError) {
+          console.error('Failed to check for possible fixes:', checkError.message);
+        }
+      }
+      
+      throw error;
     }
 
     // Run ninja to build
     console.log('Running ninja to build liboqs...');
-    const ninjaResult = spawnSync('ninja', [], {
-      stdio: 'inherit',
-      shell: false,
-    });
+    try {
+      const ninjaResult = spawnSync('ninja', [], {
+        stdio: 'inherit',
+        shell: false,
+      });
 
-    if (ninjaResult.error) {
-      throw new Error(`Failed to run ninja: ${ninjaResult.error.message}`);
-    }
-    if (ninjaResult.status !== 0) {
-      throw new Error(`ninja process exited with code ${ninjaResult.status}`);
+      if (ninjaResult.error) {
+        console.error('Ninja build error details:', ninjaResult.error);
+        throw new Error(`Failed to run ninja: ${ninjaResult.error.message}`);
+      }
+      
+      if (ninjaResult.status !== 0) {
+        console.error('Ninja build failed. This might be due to compiler flag incompatibilities.');
+        
+        // If on ARM, provide a helpful message about the likely cause
+        if (isArmArchitecture) {
+          console.error('\nERROR: The build likely failed because of x86-specific instructions being used on ARM architecture.');
+          console.error('The compiler error usually involves flags like -maes or -mssse3 which are x86-specific.\n');
+          console.error('Try manually applying a patch to liboqs source files to remove x86-specific flags:');
+          console.error('1. Edit deps/liboqs/src/common/CMakeLists.txt');
+          console.error('2. Find the lines with set_source_files_properties(...) that use -maes or -mssse3');
+          console.error('3. Modify those lines to be conditional on architecture (e.g., if NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch64")');
+          console.error('\nAlternatively, you can try using a pre-built binary for your platform if available.\n');
+        }
+        
+        throw new Error(`ninja process exited with code ${ninjaResult.status}`);
+      }
+    } catch (error) {
+      console.error('Build failed. See error details above.');
+      throw error;
     }
   }
 

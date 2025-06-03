@@ -26,8 +26,14 @@ else()
    if (OQS_DIST_X86_64_BUILD OR OQS_USE_AES_INSTRUCTIONS)
       set(AES_IMPL ${AES_IMPL} aes/aes128_ni.c)
       set(AES_IMPL ${AES_IMPL} aes/aes256_ni.c)
-      set_source_files_properties(aes/aes128_ni.c PROPERTIES COMPILE_FLAGS "-maes -mssse3")
-      set_source_files_properties(aes/aes256_ni.c PROPERTIES COMPILE_FLAGS "-maes -mssse3")
+      # Only apply x86-specific flags if not on ARM architecture
+      if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|aarch64.*|ARM.*)")
+         set_source_files_properties(aes/aes128_ni.c PROPERTIES COMPILE_FLAGS "-maes -mssse3")
+         set_source_files_properties(aes/aes256_ni.c PROPERTIES COMPILE_FLAGS "-maes -mssse3")
+         message(STATUS "Applying x86-specific AES flags for ${CMAKE_SYSTEM_PROCESSOR}")
+      else()
+         message(WARNING "Skipping x86-specific AES flags on ARM architecture (${CMAKE_SYSTEM_PROCESSOR})")
+      endif()
    elseif (OQS_DIST_ARM64_V8_BUILD)
       set(AES_IMPL ${AES_IMPL} aes/aes128_armv8.c)
       set(AES_IMPL ${AES_IMPL} aes/aes256_armv8.c)
@@ -39,7 +45,12 @@ else()
        if ((CMAKE_SYSTEM_NAME MATCHES "Darwin") AND (${CMAKE_C_COMPILER_ID} STREQUAL "GNU"))
          set_source_files_properties(aes/aes128_armv8.c PROPERTIES COMPILE_FLAGS -march=armv8-a+crypto)
          set_source_files_properties(aes/aes256_armv8.c PROPERTIES COMPILE_FLAGS -march=armv8-a+crypto)
+       else()
+         # For other ARM platforms/compilers
+         set_source_files_properties(aes/aes128_armv8.c PROPERTIES COMPILE_FLAGS -march=armv8-a+crypto)
+         set_source_files_properties(aes/aes256_armv8.c PROPERTIES COMPILE_FLAGS -march=armv8-a+crypto)
        endif()
+       message(STATUS "Using ARM AES instructions for ${CMAKE_SYSTEM_PROCESSOR}")
    endif()
 endif()
 
@@ -86,6 +97,20 @@ add_library(common OBJECT ${AES_IMPL} aes/aes.c
                           pqclean_shims/fips202x4.c
                           ${LIBJADE_RANDOMBYTES}
                           rand/rand.c)
+
+# Add architecture information
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|aarch64.*|ARM.*)")
+    target_compile_definitions(common PRIVATE OQS_SYSTEM_ARM)
+    message(STATUS "Building for ARM architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64|x64|X64)$")
+    target_compile_definitions(common PRIVATE OQS_SYSTEM_X86_64)
+    message(STATUS "Building for x86-64 architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(i.86|x86|X86)$")
+    target_compile_definitions(common PRIVATE OQS_SYSTEM_X86)
+    message(STATUS "Building for x86 architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+else()
+    message(STATUS "Building for unknown architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+endif()
 
 # Implementations of the internal API to be exposed to test programs
 add_library(internal OBJECT ${AES_IMPL} aes/aes.c
