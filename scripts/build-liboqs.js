@@ -46,31 +46,36 @@ try {
       '..'
     ];
 
-    const cmakeResult = spawnSync('cmake', cmakeArgs, {
-      stdio: 'inherit',
-      shell: true,
-    });
+console.log('Running CMake with args:', cmakeArgs.join(' '));
 
-    if (cmakeResult.error) {
-      throw new Error(`Failed to run cmake: ${cmakeResult.error.message}`);
-    }
-    if (cmakeResult.status !== 0) {
-      throw new Error(`cmake process exited with code ${cmakeResult.status}`);
-    }
+const cmakeResult = spawnSync('cmake', cmakeArgs, {
+  encoding: 'utf-8',
+  shell: true,
+});
 
-    // Build the solution using cmake --build
-    console.log('Building with MSBuild...');
-    const buildResult = spawnSync('cmake', ['--build', '.', '--config', 'Release'], {
-      stdio: 'inherit',
-      shell: true,
-    });
+if (cmakeResult.error) {
+  console.error('cmake error:', cmakeResult.error);
+}
+console.log('cmake stdout:', cmakeResult.stdout);
+console.error('cmake stderr:', cmakeResult.stderr);
+if (cmakeResult.status !== 0) {
+  throw new Error(`cmake exited with code ${cmakeResult.status}`);
+}
+console.log('Running MSBuild via cmake --build...');
 
-    if (buildResult.error) {
-      throw new Error(`Failed to build liboqs: ${buildResult.error.message}`);
-    }
-    if (buildResult.status !== 0) {
-      throw new Error(`Build process exited with code ${buildResult.status}`);
-    }
+const buildResult = spawnSync('cmake', ['--build', '.', '--config', 'Release'], {
+  encoding: 'utf-8',
+  shell: true,
+});
+
+if (buildResult.error) {
+  console.error('Build error:', buildResult.error);
+}
+console.log('Build stdout:', buildResult.stdout);
+console.error('Build stderr:', buildResult.stderr);
+if (buildResult.status !== 0) {
+  throw new Error(`Build exited with code ${buildResult.status}`);
+}
   } else {
     console.log('Detected Unix-like platform - using Ninja generator');
 
