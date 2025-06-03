@@ -30,11 +30,10 @@ try {
   console.log('Changing to build directory...');
   process.chdir(buildDir);
 
-// Step 5: Detect platform and run the appropriate build commands
+  // Step 5: Detect platform and run the appropriate build commands
   if (process.platform === 'win32') {
     console.log('Detected Windows platform - using Visual Studio generator');
 
-    // Run cmake with Visual Studio generator
     const cmakeArgs = [
       '-DBUILD_SHARED_LIBS=OFF',
       '-DCMAKE_BUILD_TYPE=Release',
@@ -42,60 +41,64 @@ try {
       '-DOQS_USE_OPENSSL=ON',
       '-DOQS_DIST_BUILD=ON',
       '-G',
-      'Visual Studio 17 2022', // or adjust to your VS version, e.g. "Visual Studio 16 2019"
+      'Visual Studio 17 2022',
       '..'
     ];
 
-console.log('Running CMake with args:', cmakeArgs.join(' '));
+    console.log('Running CMake with args:', cmakeArgs.join(' '));
 
-const cmakeResult = spawnSync('cmake', cmakeArgs, {
-  encoding: 'utf-8',
-  shell: true,
-});
+    const cmakeResult = spawnSync('cmake', cmakeArgs, {
+      encoding: 'utf-8',
+      shell: true,
+    });
 
-if (cmakeResult.error) {
-  console.error('cmake error:', cmakeResult.error);
-}
-console.log('cmake stdout:', cmakeResult.stdout);
-console.error('cmake stderr:', cmakeResult.stderr);
-if (cmakeResult.status !== 0) {
-  throw new Error(`cmake exited with code ${cmakeResult.status}`);
-}
-console.log('Running MSBuild via cmake --build...');
+    if (cmakeResult.error) {
+      console.error('cmake error:', cmakeResult.error);
+    }
+    console.log('cmake stdout:', cmakeResult.stdout);
+    console.error('cmake stderr:', cmakeResult.stderr);
+    if (cmakeResult.status !== 0) {
+      throw new Error(`cmake exited with code ${cmakeResult.status}`);
+    }
 
-const buildResult = spawnSync('cmake', ['--build', '.', '--config', 'Release'], {
-  encoding: 'utf-8',
-  shell: true,
-});
+    console.log('Running MSBuild via cmake --build...');
+    const buildResult = spawnSync('cmake', ['--build', '.', '--config', 'Release'], {
+      encoding: 'utf-8',
+      shell: true,
+    });
 
-if (buildResult.error) {
-  console.error('Build error:', buildResult.error);
-}
-console.log('Build stdout:', buildResult.stdout);
-console.error('Build stderr:', buildResult.stderr);
-if (buildResult.status !== 0) {
-  throw new Error(`Build exited with code ${buildResult.status}`);
-}
+    if (buildResult.error) {
+      console.error('Build error:', buildResult.error);
+    }
+    console.log('Build stdout:', buildResult.stdout);
+    console.error('Build stderr:', buildResult.stderr);
+    if (buildResult.status !== 0) {
+      throw new Error(`Build exited with code ${buildResult.status}`);
+    }
+
   } else {
     console.log('Detected Unix-like platform - using Ninja generator');
 
-    // Run cmake with Ninja generator
-const isArmLinux = process.platform === 'linux' && process.arch.startsWith('arm');
+    const isArmLinux = process.platform === 'linux' && process.arch.startsWith('arm');
+    const isAarch64 = process.arch === 'arm64' || process.arch === 'aarch64';
 
-const cmakeArgs = [
-  '-DBUILD_SHARED_LIBS=OFF',
-  '-DCMAKE_BUILD_TYPE=Release',
-  '-DOQS_BUILD_ONLY_LIB=ON',
-  '-DOQS_USE_OPENSSL=ON',
-  '-DOQS_DIST_BUILD=ON',
-  '-GNinja',
-  '..'
-];
+    const cmakeArgs = [
+      '-DBUILD_SHARED_LIBS=OFF',
+      '-DCMAKE_BUILD_TYPE=Release',
+      '-DOQS_BUILD_ONLY_LIB=ON',
+      '-DOQS_USE_OPENSSL=ON',
+      '-DOQS_DIST_BUILD=ON',
+      '-GNinja',
+    ];
 
-if (isArmLinux) {
-  cmakeArgs.push('-DCMAKE_C_FLAGS=-march=armv8-a');
-  cmakeArgs.push('-DCMAKE_CXX_FLAGS=-march=armv8-a');
-}
+    if (isArmLinux || isAarch64) {
+      console.log('Detected ARM architecture - disabling x86-specific code');
+      cmakeArgs.push('-DOQS_DISABLE_X86=ON');
+      cmakeArgs.push('-DCMAKE_C_FLAGS=-march=armv8-a');
+      cmakeArgs.push('-DCMAKE_CXX_FLAGS=-march=armv8-a');
+    }
+
+    cmakeArgs.push('..');
 
     const cmakeResult = spawnSync('cmake', cmakeArgs, {
       stdio: 'inherit',
@@ -129,3 +132,4 @@ if (isArmLinux) {
   console.error('Error building liboqs:', error.message);
   process.exit(1);
 }
+
