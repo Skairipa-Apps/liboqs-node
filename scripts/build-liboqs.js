@@ -82,14 +82,33 @@ try {
     // Enhanced architecture detection with detailed logging
     const isArmLinux = process.platform === 'linux' && process.arch.startsWith('arm');
     const isAarch64 = process.arch === 'arm64' || process.arch === 'aarch64';
-    const isArmArchitecture = isArmLinux || isAarch64;
-    const isX86_64 = process.arch === 'x64';
+    
+    // Check for ARM-specific environment variables that might indicate cross-compilation
+    const npmConfigArch = process.env.npm_config_arch;
+    const ccCompiler = process.env.CC;
+    
+    // Detect cross-compilation to ARM
+    const isArmCompiler = ccCompiler && (
+      ccCompiler.includes('arm-linux') || 
+      ccCompiler.includes('aarch64') || 
+      ccCompiler.includes('armv7') || 
+      ccCompiler.includes('armhf')
+    );
+    
+    const isArmTarget = npmConfigArch === 'arm' || npmConfigArch === 'arm64' || npmConfigArch === 'armhf';
+    
+    // Combined architecture detection
+    const isArmArchitecture = isArmLinux || isAarch64 || isArmCompiler || isArmTarget;
+    const isX86_64 = process.arch === 'x64' && !isArmCompiler && !isArmTarget;
     
     // Detailed system information logging for debugging
     console.log('==================== Build System Information ====================');
     console.log(`Platform: ${process.platform}, Architecture: ${process.arch}`);
     console.log(`Node.js version: ${process.version}`);
-    console.log(`Detected: ${isArmArchitecture ? 'ARM' : 'non-ARM'} architecture, ARM64: ${isAarch64 ? 'Yes' : 'No'}`);
+    console.log(`Environment: npm_config_arch=${npmConfigArch || 'not set'}, CC=${ccCompiler || 'not set'}`);
+    console.log(`Detected compiler for ARM: ${isArmCompiler ? 'Yes' : 'No'}`);
+    console.log(`Detected npm target for ARM: ${isArmTarget ? 'Yes' : 'No'}`);
+    console.log(`Final architecture decision: ${isArmArchitecture ? 'ARM' : 'non-ARM'}, ARM64: ${isAarch64 ? 'Yes' : 'No'}`);
     console.log('==================================================================');
 
     const cmakeArgs = [
@@ -121,11 +140,15 @@ try {
       cmakeArgs.push('-DOQS_ENABLE_PCLMULQDQ=OFF');
       
       // Set the system processor explicitly to prevent auto-detection issues
-      if (isAarch64) {
+      if (isAarch64 || (isArmTarget && npmConfigArch === 'arm64')) {
         cmakeArgs.push('-DCMAKE_SYSTEM_PROCESSOR=aarch64');
       } else {
         cmakeArgs.push('-DCMAKE_SYSTEM_PROCESSOR=arm');
       }
+      
+      // Explicitly disable any compiler flags that might cause issues on ARM
+      cmakeArgs.push('-DCMAKE_C_FLAGS_INIT=-DDISABLE_X86_INTRIN');
+      cmakeArgs.push('-DCMAKE_CXX_FLAGS_INIT=-DDISABLE_X86_INTRIN');
       
       // For ARM64, enable ARM-specific optimizations
       if (isAarch64) {
@@ -139,6 +162,18 @@ try {
           console.log('Configuring for Apple Silicon (ARM64)');
           cmakeArgs.push('-DCMAKE_C_FLAGS=-arch arm64');
           cmakeArgs.push('-DCMAKE_CXX_FLAGS=-arch arm64');
+        } else if (isArmCompiler) {
+          // For cross-compilation with ARM compiler
+          console.log('Configuring for cross-compilation with ARM compiler');
+          const armCrossFlags = [
+            '-fPIC',
+            '-D__DISABLE_AES__',
+            '-D__DISABLE_SSSE3__',
+            '-DDISABLE_X86_INTRIN'
+          ].join(' ');
+          
+          cmakeArgs.push(`-DCMAKE_C_FLAGS=${armCrossFlags}`);
+          cmakeArgs.push(`-DCMAKE_CXX_FLAGS=${armCrossFlags}`);
         } else {
           // Linux ARM64 specific flags - explicitly avoid any x86 instructions
           console.log('Configuring for Linux ARM64');

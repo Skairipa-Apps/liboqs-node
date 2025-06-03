@@ -26,13 +26,19 @@ else()
    if (OQS_DIST_X86_64_BUILD OR OQS_USE_AES_INSTRUCTIONS)
       set(AES_IMPL ${AES_IMPL} aes/aes128_ni.c)
       set(AES_IMPL ${AES_IMPL} aes/aes256_ni.c)
-      # Only apply x86-specific flags if not on ARM architecture
-      if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|aarch64.*|ARM.*)")
+      # Only apply x86-specific flags if not on ARM architecture AND not using ARM compiler
+      if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|aarch64.*|ARM.*)" AND
+         NOT CMAKE_C_COMPILER MATCHES ".*arm.*" AND 
+         NOT CMAKE_C_COMPILER MATCHES ".*aarch64.*" AND
+         NOT DEFINED ENV{npm_config_arch} OR NOT "$ENV{npm_config_arch}" MATCHES "^(arm|arm64|armhf)$")
          set_source_files_properties(aes/aes128_ni.c PROPERTIES COMPILE_FLAGS "-maes -mssse3")
          set_source_files_properties(aes/aes256_ni.c PROPERTIES COMPILE_FLAGS "-maes -mssse3")
-         message(STATUS "Applying x86-specific AES flags for ${CMAKE_SYSTEM_PROCESSOR}")
+         message(STATUS "Applying x86-specific AES flags for ${CMAKE_SYSTEM_PROCESSOR} with ${CMAKE_C_COMPILER}")
       else()
-         message(WARNING "Skipping x86-specific AES flags on ARM architecture (${CMAKE_SYSTEM_PROCESSOR})")
+         message(WARNING "Skipping x86-specific AES flags (ARM architecture or compiler detected)")
+         message(STATUS "  - System processor: ${CMAKE_SYSTEM_PROCESSOR}")
+         message(STATUS "  - C Compiler: ${CMAKE_C_COMPILER}")
+         message(STATUS "  - npm_config_arch: $ENV{npm_config_arch}")
       endif()
    elseif (OQS_DIST_ARM64_V8_BUILD)
       set(AES_IMPL ${AES_IMPL} aes/aes128_armv8.c)
