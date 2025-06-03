@@ -84,11 +84,11 @@ jobs:
       - name: Install Linux ARM cross compiler
         if: matrix.cross && matrix.arch == 'arm'
         run: sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
-      
+
       - name: Install Linux ARM64 cross compiler
         if: matrix.cross && matrix.arch == 'arm64'
         run: sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-      
+
       - name: Set CC/CXX environment variables
         if: matrix.cross
         run: |
@@ -99,7 +99,7 @@ jobs:
             echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
             echo "CXX=aarch64-linux-gnu-g++" >> $GITHUB_ENV
           fi
-      
+
       - name: Install build tools (Windows)
         if: runner.os == 'Windows'
         run: |
@@ -119,10 +119,10 @@ jobs:
         run: |
           function Setup-MsvcEnv {
             param($vcvarsBat)
-      
+
             if (-not (Test-Path $vcvarsBat)) { throw "$vcvarsBat not found" }
             Write-Host "Running $vcvarsBat..."
-      
+
             $envOutput = cmd /c "`"$vcvarsBat`" && set"
             $envVars = @{}
             foreach ($line in $envOutput) {
@@ -134,41 +134,33 @@ jobs:
             }
             return $envVars
           }
-      
+
           Write-Host "Locating Visual Studio..."
-          $vswherePath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+swhere.exe"
           $vsPath = & $vswherePath -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
           if (-not $vsPath) { throw "Visual Studio not found" }
-      
+
           # 64-bit setup
-          $vcvars64 = Join-Path $vsPath "VC\Auxiliary\Build\vcvars64.bat"
+cvars64.bat"
           $env64 = Setup-MsvcEnv $vcvars64
           Write-Host "MSVC 64-bit environment set."
-      
-          # Apply 64-bit env vars to current process (for next commands)
+
           foreach ($kv in $env64.GetEnumerator()) {
             [Environment]::SetEnvironmentVariable($kv.Key, $kv.Value, "Process")
           }
-      
-          # Insert your 64-bit build commands here
+
           Write-Host "Building for x64..."
-          # Example: & msbuild your_project.sln /p:Platform=x64
-      
+
           # 32-bit setup
-          $vcvars32 = Join-Path $vsPath "VC\Auxiliary\Build\vcvars32.bat"
+cvars32.bat"
           $env32 = Setup-MsvcEnv $vcvars32
           Write-Host "MSVC 32-bit environment set."
-      
-          # Apply 32-bit env vars (overwrite current process vars)
+
           foreach ($kv in $env32.GetEnumerator()) {
             [Environment]::SetEnvironmentVariable($kv.Key, $kv.Value, "Process")
           }
-      
-          # Insert your 32-bit build commands here
+
           Write-Host "Building for x86..."
-          # Example: & msbuild your_project.sln /p:Platform=Win32
-
-
 
       - name: Install dependencies
         run: npm install
@@ -176,19 +168,13 @@ jobs:
       - name: Build for ${{ matrix.os }} ${{ matrix.arch }}
         run: |
           if [[ "${{ matrix.cross }}" == "true" ]]; then
-            # Use Zig + musl for cross-compilation (safer than glibc)
             if [[ "${{ matrix.target }}" == "win" ]]; then
-              CC="zig cc -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-windows || echo i386-windows)" \
-              CXX="zig c++ -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-windows || echo i386-windows)" \
-              npm run build:package
+              CC="zig cc -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-windows || echo i386-windows)"               CXX="zig c++ -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-windows || echo i386-windows)"               npm run build:package
             else
-              CC="zig cc -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)" \
-              CXX="zig c++ -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)" \
-              npm run build:package
+              CC="zig cc -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)"               CXX="zig c++ -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)"               npm run build:package
             fi
           else
             npm run build:package
-          fi
 
   publish:
     needs: [build]
