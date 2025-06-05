@@ -83,11 +83,14 @@ jobs:
 
       - name: Install Linux ARM cross compiler
         if: matrix.cross && matrix.arch == 'arm'
-        run: sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+        run: sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf libssl-dev:armhf
 
       - name: Install Linux ARM64 cross compiler
         if: matrix.cross && matrix.arch == 'arm64'
-        run: sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libssl-dev:arm64
 
       - name: Set CC/CXX environment variables
         if: matrix.cross
@@ -172,6 +175,18 @@ jobs:
           if [[ "${{ runner.arch }}" == "ARM" || "${{ runner.arch }}" == "ARM64" ]]; then
             echo "ARM detected, patching build to disable AES-NI"
             export CMAKE_FLAGS="-DOQS_ENABLE_AESNI=OFF"
+          fi
+          # Set up cross-compilation environment for OpenSSL
+          if [[ "${{ matrix.cross }}" == "true" ]]; then
+            if [[ "${{ matrix.arch }}" == "arm64" ]]; then
+              export PKG_CONFIG_PATH="/usr/lib/aarch64-linux-gnu/pkgconfig"
+              export OPENSSL_ROOT_DIR="/usr/lib/aarch64-linux-gnu"
+              export OPENSSL_INCLUDE_DIR="/usr/include/aarch64-linux-gnu"
+            elif [[ "${{ matrix.arch }}" == "arm" ]]; then
+              export PKG_CONFIG_PATH="/usr/lib/arm-linux-gnueabihf/pkgconfig"
+              export OPENSSL_ROOT_DIR="/usr/lib/arm-linux-gnueabihf"
+              export OPENSSL_INCLUDE_DIR="/usr/include/arm-linux-gnueabihf"
+            fi
           fi
           export OQS_PERMIT_UNSUPPORTED_ARCHITECTURE=ON
           npm install
