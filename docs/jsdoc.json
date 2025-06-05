@@ -3,7 +3,7 @@
     "recurse": true,
     "encoding": "utf8",
     "template": "node_modules/docdash",
-    "destination": "./docs/out/"
+    "destination": "./docs/"
   },
   "plugins": [
     "./docs/plugins/commentsOnly",
