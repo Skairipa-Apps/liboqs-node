@@ -345,8 +345,8 @@ npm test
 # Run specific test suite
 npm test test/KeyEncapsulation.test.js
 
-# Build documentation
-npm run docs:build
+# Build umentation
+npm run s:build
 ```
 
 ## Contributing
@@ -384,7 +384,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 - **Issues**: [GitHub Issues](https://github.com/skairipa-apps/liboqs-node/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/skairipa-apps/liboqs-node/discussions)
-- **Documentation**: [API Documentation](https://skairipa-apps.github.io/liboqs-node/)
+- **Documentation**: [API Documentation](https://liboqs.js.skairipaapps.com)
 
 ## Acknowledgments
 
