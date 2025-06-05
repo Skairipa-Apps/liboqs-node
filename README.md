@@ -1,7 +1,6 @@
 # @skairipaapps/liboqs-node
 
 [![npm version](https://badge.fury.io/js/%40skairipaapps%2Fliboqs-node.svg)](https://badge.fury.io/js/%40skairipaapps%2Fliboqs-node)
-[![Node.js CI](https://github.com/skairipa-apps/liboqs-node/workflows/Node.js%20CI/badge.svg)](https://github.com/skairipa-apps/liboqs-node/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Node.js bindings for [liboqs](https://github.com/open-quantum-safe/liboqs) (Open Quantum Safe), providing post-quantum cryptographic algorithms through [liboqs-cpp](https://github.com/open-quantum-safe/liboqs-cpp).
