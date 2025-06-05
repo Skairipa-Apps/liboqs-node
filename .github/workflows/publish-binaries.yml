@@ -203,6 +203,7 @@ jobs:
             fi
           else
             npm run build:package
+          fi
 
   publish:
     needs: [build]
