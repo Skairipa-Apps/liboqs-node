@@ -1,3 +1,6 @@
+
+// This file has been patched to exclude x86-specific code on ARM
+#if !(defined(__ARM_ARCH) || defined(DISABLE_X86_INTRIN) || defined(__aarch64__) || defined(OQS_SKIP_X86_SPECIFIC))
 // SPDX-License-Identifier: Public domain
 // Based on public domain code by Romain Dolbeau
 // http://dolbeau.name/dolbeau/crypto/crypto.html
@@ -201,3 +204,15 @@ void oqs_aes128_ctr_enc_sch_ni(const uint8_t *iv, const size_t iv_len, const voi
 		memcpy(out, tmp, out_len);
 	}
 }
+
+#else
+// Provide ARM-compatible stubs
+#include "aes.h"
+#include <stdint.h>
+
+// Simple implementation for ARM architectures that don't support x86 intrinsics
+void AES128_ECB_ni(const uint8_t *key, const uint8_t *in, uint8_t *out) {
+    // Fallback to non-x86 implementation
+    AES128_ECB(key, in, out);
+}
+#endif
