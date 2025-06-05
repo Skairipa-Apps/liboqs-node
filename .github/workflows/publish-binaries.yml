@@ -173,6 +173,7 @@ jobs:
             echo "ARM detected, patching build to disable AES-NI"
             export CMAKE_FLAGS="-DOQS_ENABLE_AESNI=OFF"
           fi
+          export OQS_PERMIT_UNSUPPORTED_ARCHITECTURE=ON
           npm install
 
       - name: Build for ${{ matrix.os }} ${{ matrix.arch }}
