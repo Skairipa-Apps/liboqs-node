@@ -83,11 +83,15 @@ jobs:
 
       - name: Install Linux ARM cross compiler
         if: matrix.cross && matrix.arch == 'arm'
-        run: sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+        run: |
+          sudo dpkg --add-architecture armhf
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
 
       - name: Install Linux ARM64 cross compiler
         if: matrix.cross && matrix.arch == 'arm64'
         run: |
+          sudo dpkg --add-architecture arm64
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
@@ -165,6 +169,8 @@ jobs:
           Write-Host "Building for x86..."
 
       - name: Install dependencies
+        env:
+          OQS_PERMIT_UNSUPPORTED_ARCHITECTURE: ON
         run: |
           if [[ "${{ matrix.arch }}" == "arm" || "${{ matrix.arch }}" == "arm64" ]]; then
             CC="zig cc -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)" \
@@ -181,7 +187,6 @@ jobs:
             export CMAKE_FLAGS="${CMAKE_FLAGS} -DOQS_USE_OPENSSL=OFF"
             echo "Cross-compilation detected - disabling OpenSSL to use built-in crypto"
           fi
-          export OQS_PERMIT_UNSUPPORTED_ARCHITECTURE=ON
           npm install
 
       - name: Build for ${{ matrix.os }} ${{ matrix.arch }}
