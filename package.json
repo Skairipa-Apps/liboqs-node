@@ -1,6 +1,6 @@
 {
   "name": "@skairipaapps/liboqs-node",
-  "version": "3.0.5",
+  "version": "4.0.1",
   "description": "Node.js bindings for liboqs.",
   "author": "Skairipa Apps Inc.",
   "license": "MIT",
@@ -49,7 +49,6 @@
     "asymmetric"
   ],
   "dependencies": {
-    "@skairipaapps/liboqs-node": "^0.2.4",
     "bindings": "^1.5.0",
     "node-addon-api": "^8.3.1",
     "node-pre-gyp": "^0.17.0"
@@ -72,6 +71,14 @@
     "src/",
     "scripts/",
     "binding.gyp",
-    "npm-shrinkwrap.json"
-  ]
+    "npm-shrinkwrap.json",
+    "index.d.ts",
+    "README.md",
+    "CONTRIBUTING.md",
+    "examples.js"
+  ],
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/skairipa-apps"
+  }
 }
