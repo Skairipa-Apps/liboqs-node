@@ -120,6 +120,8 @@ jobs:
           # Allow partial failures and continue with available packages
           sudo apt-get update || echo "Some repositories failed, continuing with available packages"
           sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          # Install ARM64 OpenSSL development packages
+          sudo apt-get install -y libssl-dev:arm64 || echo "Failed to install ARM64 OpenSSL, will use built-in crypto"
 
       - name: Set CC/CXX environment variables
         if: matrix.cross
@@ -197,6 +199,8 @@ jobs:
       - name: Install dependencies
         env:
           OQS_PERMIT_UNSUPPORTED_ARCHITECTURE: ON
+          # Force disable OpenSSL for cross-compilation
+          OQS_USE_OPENSSL: "${{ matrix.cross == true && 'OFF' || 'ON' }}"
         run: |
           if [[ "${{ matrix.arch }}" == "arm" || "${{ matrix.arch }}" == "arm64" ]]; then
             CC="zig cc -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)" \
@@ -212,6 +216,7 @@ jobs:
             export OQS_USE_OPENSSL=OFF
             export CMAKE_FLAGS="${CMAKE_FLAGS} -DOQS_USE_OPENSSL=OFF"
             echo "Cross-compilation detected - disabling OpenSSL to use built-in crypto"
+            echo "OQS_USE_OPENSSL=OFF" >> $GITHUB_ENV
           fi
           npm install
 
