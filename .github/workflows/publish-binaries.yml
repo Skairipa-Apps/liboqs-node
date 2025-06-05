@@ -78,50 +78,102 @@ jobs:
       - name: Install build tools (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential g++ libc6-dev libc6-dev-i386 ninja-build cmake curl g++-13
+          # Handle both real GitHub Actions and local act testing
+          if command -v sudo >/dev/null 2>&1; then
+            SUDO_CMD="sudo"
+          else
+            SUDO_CMD=""
+            echo "Running without sudo (likely in act/container environment)"
+            # In container environments, try to detect if we're running as root
+            if [ "$(id -u)" = "0" ]; then
+              echo "Running as root in container, no sudo needed"
+            else
+              echo "Warning: Not running as root and no sudo available"
+            fi
+          fi
+          
+          $SUDO_CMD apt-get update || true
+          $SUDO_CMD apt-get install -y build-essential g++ libc6-dev ninja-build cmake curl || {
+            echo "Failed to install all packages, trying minimal set..."
+            $SUDO_CMD apt-get install -y build-essential cmake || {
+              echo "Failed to install build tools, continuing anyway..."
+            }
+          }
+          
+          # Try to install g++-13 but don't fail if not available
+          $SUDO_CMD apt-get install -y g++-13 || echo "g++-13 not available, using default g++"
+          # Try to install libc6-dev-i386 but don't fail if not available
+          $SUDO_CMD apt-get install -y libc6-dev-i386 || echo "libc6-dev-i386 not available, skipping 32-bit support"
 
       - name: Install Linux ARM cross compiler
         if: matrix.cross && matrix.arch == 'arm'
         run: |
+          # Handle both real GitHub Actions and local act testing
+          if command -v sudo >/dev/null 2>&1; then
+            SUDO_CMD="sudo"
+          else
+            SUDO_CMD=""
+            echo "Running without sudo (likely in act/container environment)"
+          fi
+          
           # Disable problematic security repositories for ARM
-          sudo sed -i '/security\.ubuntu\.com.*armhf/d' /etc/apt/sources.list || true
-          sudo sed -i '/archive\.ubuntu\.com.*armhf/d' /etc/apt/sources.list || true
+          $SUDO_CMD sed -i '/security\.ubuntu\.com.*armhf/d' /etc/apt/sources.list || true
+          $SUDO_CMD sed -i '/archive\.ubuntu\.com.*armhf/d' /etc/apt/sources.list || true
           
           # Add Ubuntu Ports repository for ARM packages
-          echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc) main restricted" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc)-updates main restricted" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc) universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc)-updates universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc)-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc)-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          if command -v lsb_release >/dev/null 2>&1; then
+            RELEASE=$(lsb_release -sc)
+          else
+            RELEASE="focal"  # Default fallback for containers
+          fi
           
-          sudo dpkg --add-architecture armhf
+          echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ $RELEASE main restricted" | $SUDO_CMD tee -a /etc/apt/sources.list
+          echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ $RELEASE-updates main restricted" | $SUDO_CMD tee -a /etc/apt/sources.list
+          echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ $RELEASE universe multiverse" | $SUDO_CMD tee -a /etc/apt/sources.list
+          echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ $RELEASE-updates universe multiverse" | $SUDO_CMD tee -a /etc/apt/sources.list
+          echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ $RELEASE-backports main restricted universe multiverse" | $SUDO_CMD tee -a /etc/apt/sources.list
+          echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ $RELEASE-security main restricted universe multiverse" | $SUDO_CMD tee -a /etc/apt/sources.list
+          
+          $SUDO_CMD dpkg --add-architecture armhf || echo "Failed to add armhf architecture"
           # Allow partial failures and continue with available packages
-          sudo apt-get update || echo "Some repositories failed, continuing with available packages"
-          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+          $SUDO_CMD apt-get update || echo "Some repositories failed, continuing with available packages"
+          $SUDO_CMD apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf || echo "Failed to install ARM cross-compiler"
 
       - name: Install Linux ARM64 cross compiler
         if: matrix.cross && matrix.arch == 'arm64'
         run: |
+          # Handle both real GitHub Actions and local act testing
+          if command -v sudo >/dev/null 2>&1; then
+            SUDO_CMD="sudo"
+          else
+            SUDO_CMD=""
+            echo "Running without sudo (likely in act/container environment)"
+          fi
+          
           # Disable problematic security repositories for ARM64
-          sudo sed -i '/security\.ubuntu\.com.*arm64/d' /etc/apt/sources.list || true
-          sudo sed -i '/archive\.ubuntu\.com.*arm64/d' /etc/apt/sources.list || true
+          $SUDO_CMD sed -i '/security\.ubuntu\.com.*arm64/d' /etc/apt/sources.list || true
+          $SUDO_CMD sed -i '/archive\.ubuntu\.com.*arm64/d' /etc/apt/sources.list || true
           
           # Add Ubuntu Ports repository for ARM64 packages
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc) main restricted" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc)-updates main restricted" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc) universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc)-updates universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc)-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc)-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          if command -v lsb_release >/dev/null 2>&1; then
+            RELEASE=$(lsb_release -sc)
+          else
+            RELEASE="focal"  # Default fallback for containers
+          fi
           
-          sudo dpkg --add-architecture arm64
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ $RELEASE main restricted" | $SUDO_CMD tee -a /etc/apt/sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ $RELEASE-updates main restricted" | $SUDO_CMD tee -a /etc/apt/sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ $RELEASE universe multiverse" | $SUDO_CMD tee -a /etc/apt/sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ $RELEASE-updates universe multiverse" | $SUDO_CMD tee -a /etc/apt/sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ $RELEASE-backports main restricted universe multiverse" | $SUDO_CMD tee -a /etc/apt/sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ $RELEASE-security main restricted universe multiverse" | $SUDO_CMD tee -a /etc/apt/sources.list
+          
+          $SUDO_CMD dpkg --add-architecture arm64 || echo "Failed to add arm64 architecture"
           # Allow partial failures and continue with available packages
-          sudo apt-get update || echo "Some repositories failed, continuing with available packages"
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          $SUDO_CMD apt-get update || echo "Some repositories failed, continuing with available packages"
+          $SUDO_CMD apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu || echo "Failed to install ARM64 cross-compiler"
           # Install ARM64 OpenSSL development packages
-          sudo apt-get install -y libssl-dev:arm64 || echo "Failed to install ARM64 OpenSSL, will use built-in crypto"
+          $SUDO_CMD apt-get install -y libssl-dev:arm64 || echo "Failed to install ARM64 OpenSSL, will use built-in crypto"
 
       - name: Set CC/CXX environment variables
         if: matrix.cross
@@ -207,10 +259,14 @@ jobs:
             CXX="zig c++ -target $([[ "${{ matrix.arch }}" == "arm64" ]] && echo aarch64-linux-musl || echo arm-linux-musleabihf)" \
             npm install -g rimraf
           fi
-          if [[ "${{ runner.arch }}" == "ARM" || "${{ runner.arch }}" == "ARM64" ]]; then
-            echo "ARM detected, patching build to disable AES-NI"
-            export CMAKE_FLAGS="-DOQS_ENABLE_AESNI=OFF"
+          
+          # Check for container environment (act) or ARM runner architecture
+          if [[ "${{ runner.arch }}" == "ARM" || "${{ runner.arch }}" == "ARM64" || "$ACT" == "true" ]]; then
+            echo "Container or ARM environment detected - disabling advanced CPU instructions"
+            export CMAKE_FLAGS="-DOQS_ENABLE_AESNI=OFF -DOQS_ENABLE_AVX=OFF -DOQS_ENABLE_AVX2=OFF -DOQS_ENABLE_AVX512=OFF"
+            echo "CMAKE_FLAGS=${CMAKE_FLAGS}" >> $GITHUB_ENV
           fi
+          
           # Set up cross-compilation environment - disable OpenSSL to avoid dependency issues
           if [[ "${{ matrix.cross }}" == "true" ]]; then
             export OQS_USE_OPENSSL=OFF

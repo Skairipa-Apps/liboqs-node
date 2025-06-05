@@ -530,9 +530,52 @@ try {
       // For x86/x64 platforms
       console.log('============= Configuring for x86/x64 Architecture =============');
       cmakeArgs.push('-DOQS_DIST_X86_64_BUILD=ON');
-      cmakeArgs.push('-DOQS_USE_AES_INSTRUCTIONS=ON');
+      
+      // Check if we're in a container environment that might not support AVX2
+      const isContainer = process.env.CI === 'true' && process.env.ACT === 'true';
+      const disableAesNi = process.env.CMAKE_FLAGS && process.env.CMAKE_FLAGS.includes('DOQS_ENABLE_AESNI=OFF');
+      
+      // Also check for explicit CMAKE_FLAGS from environment
+      if (process.env.CMAKE_FLAGS) {
+        console.log('Found CMAKE_FLAGS environment variable:', process.env.CMAKE_FLAGS);
+        // Parse CMAKE_FLAGS and add each flag
+        const flags = process.env.CMAKE_FLAGS.split(' ').filter(flag => flag.trim().length > 0);
+        flags.forEach(flag => {
+          if (flag.startsWith('-D')) {
+            cmakeArgs.push(flag);
+            console.log('Added CMake flag from environment:', flag);
+          }
+        });
+      }
+      
+      if (isContainer || disableAesNi) {
+        console.log('Container or restricted environment detected - disabling advanced CPU instructions');
+        cmakeArgs.push('-DOQS_USE_AES_INSTRUCTIONS=OFF');
+        cmakeArgs.push('-DOQS_ENABLE_AESNI=OFF');
+        cmakeArgs.push('-DOQS_ENABLE_AVX=OFF');
+        cmakeArgs.push('-DOQS_ENABLE_AVX2=OFF');
+        cmakeArgs.push('-DOQS_ENABLE_AVX512=OFF');
+        cmakeArgs.push('-DOQS_ENABLE_SSSE3=OFF');
+        cmakeArgs.push('-DOQS_ENABLE_SSE2=OFF');
+        cmakeArgs.push('-DOQS_ENABLE_PCLMULQDQ=OFF');
+      } else if (!process.env.CMAKE_FLAGS || !process.env.CMAKE_FLAGS.includes('DOQS_USE_AES_INSTRUCTIONS')) {
+        cmakeArgs.push('-DOQS_USE_AES_INSTRUCTIONS=ON');
+      }
+      
       cmakeArgs.push('-DCMAKE_SYSTEM_PROCESSOR=x86_64');
       console.log('==================================================================');
+    }
+    
+    // Add any additional CMAKE_FLAGS that weren't already handled
+    if (process.env.CMAKE_FLAGS) {
+      console.log('Processing additional CMAKE_FLAGS environment variable:', process.env.CMAKE_FLAGS);
+      const flags = process.env.CMAKE_FLAGS.split(' ').filter(flag => flag.trim().length > 0);
+      flags.forEach(flag => {
+        if (flag.startsWith('-D') && !cmakeArgs.includes(flag)) {
+          cmakeArgs.push(flag);
+          console.log('Added additional CMake flag from environment:', flag);
+        }
+      });
     }
 
     cmakeArgs.push('..');
