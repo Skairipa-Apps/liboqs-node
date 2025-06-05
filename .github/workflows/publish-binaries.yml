@@ -84,6 +84,10 @@ jobs:
       - name: Install Linux ARM cross compiler
         if: matrix.cross && matrix.arch == 'arm'
         run: |
+          # Disable problematic security repositories for ARM
+          sudo sed -i '/security\.ubuntu\.com.*armhf/d' /etc/apt/sources.list || true
+          sudo sed -i '/archive\.ubuntu\.com.*armhf/d' /etc/apt/sources.list || true
+          
           # Add Ubuntu Ports repository for ARM packages
           echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc) main restricted" | sudo tee -a /etc/apt/sources.list
           echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc)-updates main restricted" | sudo tee -a /etc/apt/sources.list
@@ -93,12 +97,17 @@ jobs:
           echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc)-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
           
           sudo dpkg --add-architecture armhf
-          sudo apt-get update
+          # Allow partial failures and continue with available packages
+          sudo apt-get update || echo "Some repositories failed, continuing with available packages"
           sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
 
       - name: Install Linux ARM64 cross compiler
         if: matrix.cross && matrix.arch == 'arm64'
         run: |
+          # Disable problematic security repositories for ARM64
+          sudo sed -i '/security\.ubuntu\.com.*arm64/d' /etc/apt/sources.list || true
+          sudo sed -i '/archive\.ubuntu\.com.*arm64/d' /etc/apt/sources.list || true
+          
           # Add Ubuntu Ports repository for ARM64 packages
           echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc) main restricted" | sudo tee -a /etc/apt/sources.list
           echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc)-updates main restricted" | sudo tee -a /etc/apt/sources.list
@@ -108,7 +117,8 @@ jobs:
           echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ $(lsb_release -sc)-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
           
           sudo dpkg --add-architecture arm64
-          sudo apt-get update
+          # Allow partial failures and continue with available packages
+          sudo apt-get update || echo "Some repositories failed, continuing with available packages"
           sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
       - name: Set CC/CXX environment variables
