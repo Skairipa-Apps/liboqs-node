@@ -752,6 +752,40 @@ try {
   }
 
   console.log('liboqs build completed successfully');
+  
+  // Create symlink from liboqs.a to liboqs-internal.a for Node.js compatibility
+  console.log('Creating symlink for Node.js compatibility...');
+  try {
+    const libDir = path.join(buildDir, 'lib');
+    const targetFile = path.join(libDir, 'liboqs-internal.a');
+    const symlinkFile = path.join(libDir, 'liboqs.a');
+    
+    // Check if the target file exists
+    if (fs.existsSync(targetFile)) {
+      // Remove existing symlink if it exists
+      if (fs.existsSync(symlinkFile)) {
+        console.log('Removing existing liboqs.a symlink...');
+        fs.unlinkSync(symlinkFile);
+      }
+      
+      // Create the symlink
+      fs.symlinkSync('liboqs-internal.a', symlinkFile);
+      console.log('✅ Successfully created symlink: liboqs.a -> liboqs-internal.a');
+      
+      // Verify the symlink was created
+      if (fs.existsSync(symlinkFile)) {
+        console.log('✅ Symlink verification passed');
+      } else {
+        console.warn('⚠️ Warning: Symlink creation may have failed - file not found after creation');
+      }
+    } else {
+      console.warn('⚠️ Warning: liboqs-internal.a not found, skipping symlink creation');
+      console.log(`Expected file location: ${targetFile}`);
+    }
+  } catch (symlinkError) {
+    console.warn('⚠️ Warning: Failed to create symlink for liboqs.a:', symlinkError.message);
+    console.log('You may need to manually create the symlink if Node.js build fails');
+  }
 } catch (error) {
   console.error('Error building liboqs:', error.message);
   console.error('Please check build configuration and try again.');
