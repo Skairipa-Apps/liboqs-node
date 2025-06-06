@@ -105,7 +105,7 @@ const metadata = {
   name: packageJson.name,
   version: version,
   runtime: "bun",
-  runtime_version: bunVersion,
+  runtime_version: `v${bunVersion}`,
   platform: platform,
   arch: arch,
   files: [
