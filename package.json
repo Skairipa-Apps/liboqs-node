@@ -1,6 +1,6 @@
 {
   "name": "@skairipaapps/liboqs-node",
-  "version": "4.1.19",
+  "version": "4.1.20",
   "description": "Node.js bindings for liboqs.",
   "author": "Skairipa Apps Inc.",
   "license": "MIT",
@@ -36,6 +36,7 @@
     "docs:build": "jsdoc -c ./docs/jsdoc.json",
     "ensure_submodules": "node ./scripts/ensure_submodules.cjs",
     "install": "node-pre-gyp install --fallback-to-build",
+    "postinstall": "node-pre-gyp install --fallback-to-build",
     "liboqs:build": "node ./scripts/build-liboqs.js",
     "liboqs:build_if_not_exists": "node ./scripts/check_liboqs_exists.cjs",
     "prebuild": "npm run ensure_submodules && npm run liboqs:build_if_not_exists",
