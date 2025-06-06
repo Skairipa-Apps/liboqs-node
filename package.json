@@ -1,6 +1,9 @@
 {
   "name": "@skairipaapps/liboqs-node",
-  "version": "4.1.20",
+  "version": "4.1.21",
+  "trustedDependencies": [
+    "@skairipaapps/liboqs-node"
+  ],
   "description": "Node.js bindings for liboqs.",
   "author": "Skairipa Apps Inc.",
   "license": "MIT",
