@@ -26,4 +26,4 @@ git push skairipaapps --tags
 
 echo "✅ Version bumped to $newversion and pushed successfully."
 
-npm run build:package && npm run build:package:bun && npm run package:bun && npm run publish:prepare && npm run publish:draft && npm publish
+npm run build:package && npm run build:package:bun && npm run publish:prepare && npm run package:bun && npm run publish:draft && npm publish
