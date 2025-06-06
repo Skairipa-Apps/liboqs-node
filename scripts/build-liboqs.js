@@ -1,9 +1,13 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-const { spawnSync } = require('child_process');
-const rimraf = require('rimraf');
+import fs from 'fs';
+import path from 'path';
+import { spawnSync } from 'child_process';
+import rimraf from 'rimraf';
+import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 
 // Configuration
 const liboqsDir = path.join(__dirname, '..', 'deps', 'liboqs');

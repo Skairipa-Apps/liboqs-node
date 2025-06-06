@@ -1,20 +1,27 @@
 {
   "name": "@skairipaapps/liboqs-node",
-  "version": "4.0.5",
+  "version": "4.1.0",
   "description": "Node.js bindings for liboqs.",
   "author": "Skairipa Apps Inc.",
   "license": "MIT",
   "main": "lib/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/index.cjs"
+    }
+  },
   "types": "index.d.ts",
   "scripts": {
     "build": "node-gyp rebuild",
     "build:all": "npm run liboqs:build && node-gyp rebuild",
     "build:package": "npm run clean && npm run build:all && node-pre-gyp package",
     "docs:build": "jsdoc -c ./docs/jsdoc.json",
-    "ensure_submodules": "node ./scripts/ensure_submodules.js",
+    "ensure_submodules": "node ./scripts/ensure_submodules.cjs",
     "install": "node-pre-gyp install --fallback-to-build",
     "liboqs:build": "node ./scripts/build-liboqs.js",
-    "liboqs:build_if_not_exists": "node ./scripts/check_liboqs_exists.js",
+    "liboqs:build_if_not_exists": "node ./scripts/check_liboqs_exists.cjs",
     "prebuild": "npm run ensure_submodules && npm run liboqs:build_if_not_exists",
     "publish:prepare": "node-pre-gyp configure && node-pre-gyp rebuild && node-pre-gyp package",
     "publish:draft": "NODE_PRE_GYP_GITHUB_TOKEN=$(cat publish-token) node-pre-gyp-github publish",
@@ -62,9 +69,6 @@
     "mocha": "^8.4.0",
     "node-pre-gyp-github": "^2.0.0",
     "rimraf": "^3.0.2"
-  },
-  "engines": {
-    "node": ">=12.11.0"
   },
   "files": [
     "lib/",
