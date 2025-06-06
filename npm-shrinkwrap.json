@@ -1,12 +1,12 @@
 {
   "name": "@skairipaapps/liboqs-node",
-  "version": "4.1.8",
+  "version": "4.1.9",
   "lockfileVersion": 2,
   "requires": true,
   "packages": {
     "": {
       "name": "@skairipaapps/liboqs-node",
-      "version": "4.1.8",
+      "version": "4.1.9",
       "hasInstallScript": true,
       "license": "MIT",
       "dependencies": {
