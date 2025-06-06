@@ -1,6 +1,6 @@
 {
   "name": "@skairipaapps/liboqs-node",
-  "version": "4.1.10",
+  "version": "4.1.11",
   "description": "Node.js bindings for liboqs.",
   "author": "Skairipa Apps Inc.",
   "license": "MIT",
@@ -30,7 +30,7 @@
     "build:bun": "BUILD_SHARED=true bun run liboqs:build",
     "build:shared-lib": "BUILD_SHARED=true node ./scripts/build-liboqs.js",
     "build:all": "npm run liboqs:build && node-gyp rebuild",
-    "build:package": "npm run clean && npm run build:all && npm run build:bun && node-pre-gyp package",
+    "build:package": "npm run clean && npm run build:all && node-pre-gyp package",
     "docs:build": "jsdoc -c ./docs/jsdoc.json",
     "ensure_submodules": "node ./scripts/ensure_submodules.cjs",
     "install": "node-pre-gyp install --fallback-to-build",
