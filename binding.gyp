@@ -84,12 +84,12 @@
     "./deps/liboqs-cpp/include",
     "/opt/homebrew/opt/openssl/include"
   ],
-  "libraries": [
-    "../deps/liboqs/build/lib/liboqs.a",
-    "-L/opt/homebrew/opt/openssl/lib",
-    "-lcrypto",
-    "-lssl"
-  ]
+"libraries": [
+  "../deps/liboqs/build/lib/liboqs.a",
+  "-L/opt/homebrew/opt/openssl@3/lib",
+  "-lcrypto",
+  "-lssl"
+]
 }]
       ],
       "module_path": "lib/binding/{platform}-{arch}/"
