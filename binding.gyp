@@ -71,17 +71,26 @@
             "-loqs"
           ]
         }],
-        [ "OS=='mac'", {
-          "xcode_settings": {
-            "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
-            "CLANG_CXX_LIBRARY": "libc++"
-          },
-          "cflags": ["-fexceptions", "-std=c++20"],
-          "cflags_cc": ["-fexceptions", "-std=c++20"],
-          "libraries": [
-            "../deps/liboqs/build/lib/liboqs.a"
-          ]
-        }]
+[ "OS=='mac'", {
+  "xcode_settings": {
+    "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
+    "CLANG_CXX_LIBRARY": "libc++"
+  },
+  "cflags": ["-fexceptions", "-std=c++20"],
+  "cflags_cc": ["-fexceptions", "-std=c++20"],
+  "include_dirs": [
+    "./deps/liboqs/include",
+    "./deps/liboqs/build/include",
+    "./deps/liboqs-cpp/include",
+    "/opt/homebrew/opt/openssl/include"
+  ],
+  "libraries": [
+    "../deps/liboqs/build/lib/liboqs.a",
+    "-L/opt/homebrew/opt/openssl/lib",
+    "-lcrypto",
+    "-lssl"
+  ]
+}]
       ],
       "module_path": "lib/binding/{platform}-{arch}/"
     }
