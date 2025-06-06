@@ -6,8 +6,11 @@ set -e
 # Step 1: Bump patch version in package.json using npm
 newversion=$(npm version patch --no-git-tag-version)
 
+npm run docs:build
+
 # Step 2: Stage changes
 git add -u
+git add .
 
 # Step 3: Commit with a generic message
 git commit -m "update"

@@ -3,7 +3,7 @@
 const commentRegex = /\/\*\*[\s\S]+?\*\//g;
 const notNewlineRegex = /[^\n]/g;
 
-exports.handlers = {
+export const handlers = {
   beforeParse(e) {
     const comments = e.source.match(commentRegex);
     if (comments) {
