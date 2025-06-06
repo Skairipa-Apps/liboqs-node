@@ -37,10 +37,11 @@ namespace Sigs {
         numDefaultSigs++;
       }
     }
-    auto enabledSigsArray = Napi::Array::New(env, enabledSigs.size() - numDefaultSigs);
-    for (std::size_t i = 0; auto sig : enabledSigs) {
+    auto enabledSigsArray = Napi::Array::New(env);
+    std::size_t i = 0;
+    for (const auto& sig : enabledSigs) {
       if (sig != "DEFAULT") {
-        enabledSigsArray[i++] = sig;
+        enabledSigsArray[i++] = Napi::String::New(env, sig);
       }
     }
     return enabledSigsArray;

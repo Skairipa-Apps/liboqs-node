@@ -1,6 +1,6 @@
 {
   "name": "@skairipaapps/liboqs-node",
-  "version": "4.1.24",
+  "version": "4.1.25",
   "trustedDependencies": [
     "@skairipaapps/liboqs-node"
   ],
