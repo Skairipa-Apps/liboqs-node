@@ -322,15 +322,22 @@ try {
       console.log(`CXXFLAGS: ${process.env.CXXFLAGS}`);
     }
     
+    // Check if we're building for Bun (need shared libraries for FFI)
+    const buildShared = process.env.BUILD_SHARED === 'true' || process.argv.includes('--shared');
+    
     // Add standard CMake args
     cmakeArgs.push(
-      '-DBUILD_SHARED_LIBS=OFF',
+      buildShared ? '-DBUILD_SHARED_LIBS=ON' : '-DBUILD_SHARED_LIBS=OFF',
       '-DCMAKE_BUILD_TYPE=Release',
       '-DOQS_BUILD_ONLY_LIB=ON',
       '-DOQS_USE_OPENSSL=ON',
       '-DOQS_DIST_BUILD=ON',
       '-GNinja'
     );
+    
+    if (buildShared) {
+      console.log('Building shared libraries for FFI compatibility...');
+    }
     
     // Add cross-compilation setup if needed
     if (explicitCrossCompile) {

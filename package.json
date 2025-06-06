@@ -1,20 +1,34 @@
 {
   "name": "@skairipaapps/liboqs-node",
-  "version": "4.1.4",
+  "version": "4.1.5",
   "description": "Node.js bindings for liboqs.",
   "author": "Skairipa Apps Inc.",
   "license": "MIT",
-  "main": "lib/index.js",
+  "main": "lib/index.cjs",
+  "module": "lib/index.js",
   "type": "module",
   "exports": {
     ".": {
+      "bun": "./lib/bun.js",
       "import": "./lib/index.js",
-      "require": "./lib/index.cjs"
-    }
+      "require": "./lib/index.cjs",
+      "types": "./index.d.ts"
+    },
+    "./package.json": "./package.json"
   },
   "types": "index.d.ts",
+  "typesVersions": {
+    "*": {
+      "*": [
+        "index.d.ts"
+      ]
+    }
+  },
   "scripts": {
     "build": "node-gyp rebuild",
+    "build:node": "node-gyp rebuild",
+    "build:bun": "BUILD_SHARED=true bun run liboqs:build",
+    "build:shared-lib": "BUILD_SHARED=true node ./scripts/build-liboqs.js",
     "build:all": "npm run liboqs:build && node-gyp rebuild",
     "build:package": "npm run clean && npm run build:all && node-pre-gyp package",
     "docs:build": "jsdoc -c ./docs/jsdoc.json",
