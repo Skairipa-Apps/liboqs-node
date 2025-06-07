@@ -33,7 +33,7 @@
             }
           ]
         }],
-        // Windows settings
+        # Windows settings
         [ "OS=='win'", {
           "msvs_settings": {
             "VCCLCompilerTool": {
@@ -63,7 +63,7 @@
           ]
         }],
 
-        // Linux dynamic linking (still uses liboqs.so)
+        # Linux dynamic linking (still uses liboqs.so)
         [ "OS=='linux'", {
           "cflags": ["-fexceptions", "-std=c++20"],
           "cflags_cc": ["-fexceptions", "-std=c++20"],
@@ -73,7 +73,7 @@
           ]
         }],
 
-        // macOS static linking (no dylib, no rpath)
+        # macOS static linking (no dylib, no rpath)
         [ "OS=='mac'", {
           "xcode_settings": {
             "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
