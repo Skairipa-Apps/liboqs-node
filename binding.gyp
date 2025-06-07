@@ -88,7 +88,7 @@
             "/opt/homebrew/opt/openssl@3/include"
           ],
           "libraries": [
-            "<!(pwd)/deps/liboqs/build/lib/liboqs.a", // absolute path to ensure static
+            "<!(pwd)/deps/liboqs/build/lib/liboqs.a",
             "-L/opt/homebrew/opt/openssl@3/lib",
             "-lcrypto",
             "-lssl"
