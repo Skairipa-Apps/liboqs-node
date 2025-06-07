@@ -75,25 +75,28 @@
 
         # macOS static linking (no dylib, no rpath)
         [ "OS=='mac'", {
-          "xcode_settings": {
-            "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
-            "CLANG_CXX_LIBRARY": "libc++"
-          },
-          "cflags": ["-fexceptions", "-std=c++20"],
-          "cflags_cc": ["-fexceptions", "-std=c++20"],
-          "include_dirs": [
-            "./deps/liboqs/include",
-            "./deps/liboqs/build/include",
-            "./deps/liboqs-cpp/include",
-            "/opt/homebrew/opt/openssl@3/include"
-          ],
-          "libraries": [
-            "<!(pwd)/deps/liboqs/build/lib/liboqs.a",
-            "-L/opt/homebrew/opt/openssl@3/lib",
-            "-lcrypto",
-            "-lssl"
-          ]
-        }]
+  "xcode_settings": {
+    "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
+    "CLANG_CXX_LIBRARY": "libc++"
+  },
+  "cflags": ["-fexceptions", "-std=c++20"],
+  "cflags_cc": ["-fexceptions", "-std=c++20"],
+  "include_dirs": [
+    "./deps/liboqs/include",
+    "./deps/liboqs/build/include",
+    "./deps/liboqs-cpp/include",
+    "/opt/homebrew/opt/openssl@3/include"
+  ],
+  "libraries": [
+    "../deps/liboqs/build/lib/liboqs.a",  // static lib
+    "-L/opt/homebrew/opt/openssl@3/lib",
+    "-lcrypto",
+    "-lssl"
+  ],
+  "ldflags": [
+    "-Wl,-force_load,../deps/liboqs/build/lib/liboqs.a"
+  ]
+}]
       ],
       "module_path": "lib/binding/{platform}-{arch}/"
     }
