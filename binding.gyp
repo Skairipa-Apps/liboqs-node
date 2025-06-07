@@ -22,7 +22,6 @@
         "LIBOQS_CPP_VERSION=\"1.0.0\""
       ],
       "conditions": [
-        // Prebuild for Unix
         [ "OS!='win'", {
           "actions": [
             {
@@ -34,7 +33,6 @@
             }
           ]
         }],
-
         // Windows settings
         [ "OS=='win'", {
           "msvs_settings": {
