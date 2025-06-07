@@ -19,7 +19,7 @@
       "defines": [
         "NAPI_CPP_EXCEPTIONS",
         "NAPI_VERSION=6",
-        "LIBOQS_CPP_VERSION=\"0.7.1\""
+        "LIBOQS_CPP_VERSION=\"1.0.0\""
       ],
       "conditions": [
         # Prebuild for Unix
