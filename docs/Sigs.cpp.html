@@ -71,26 +71,43 @@ namespace Sigs {
    * @method
    * @returns {Sigs.Algorithm[]} - A list of enabled signature algorithms.
    */
-  Napi::Value getEnabledAlgorithms(const Napi::CallbackInfo&amp; info) {
+Napi::Value getEnabledAlgorithms(const Napi::CallbackInfo&amp; info) {
     Napi::Env env = info.Env();
+
+    std::cout &lt;&lt; "[getEnabledAlgorithms] Called from Node.js" &lt;&lt; std::endl;
+
+    // Get all enabled signature algorithms from liboqs-cpp
     const std::vector&lt;std::string> enabledSigs = oqs::Sigs::get_enabled_sigs();
+
+    std::cout &lt;&lt; "[getEnabledAlgorithms] Retrieved " &lt;&lt; enabledSigs.size() &lt;&lt; " algorithms" &lt;&lt; std::endl;
+
     std::size_t numDefaultSigs = 0;
+
+    // Count how many "DEFAULT" algorithms are present
     for (auto sig : enabledSigs) {
-      // Not expecting any other default algorithms to be created
-      if (sig == "DEFAULT") {
-        numDefaultSigs++;
-      }
+        if (sig == "DEFAULT") {
+            numDefaultSigs++;
+            std::cout &lt;&lt; "[getEnabledAlgorithms] Found 'DEFAULT' algorithm" &lt;&lt; std::endl;
+        }
     }
+
+    std::cout &lt;&lt; "[getEnabledAlgorithms] Number of 'DEFAULT' algorithms: " &lt;&lt; numDefaultSigs &lt;&lt; std::endl;
+
+    // Create a JS array to return to Node.js
     auto enabledSigsArray = Napi::Array::New(env);
+
     std::size_t i = 0;
     for (const auto&amp; sig : enabledSigs) {
-      if (sig != "DEFAULT") {
-        enabledSigsArray[i++] = Napi::String::New(env, sig);
-      }
+        if (sig != "DEFAULT") {
+            std::cout &lt;&lt; "[getEnabledAlgorithms] Adding algorithm to result: " &lt;&lt; sig &lt;&lt; std::endl;
+            enabledSigsArray[i++] = Napi::String::New(env, sig);
+        }
     }
-    return enabledSigsArray;
-  }
 
+    std::cout &lt;&lt; "[getEnabledAlgorithms] Returning " &lt;&lt; i &lt;&lt; " algorithms to JS" &lt;&lt; std::endl;
+
+    return enabledSigsArray;
+}
   /**
    * Checks if an algorithm was enabled at compile-time and is available for use.
    * @memberof Sigs

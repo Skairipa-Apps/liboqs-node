@@ -27,26 +27,43 @@ namespace Sigs {
    * @method
    * @returns {Sigs.Algorithm[]} - A list of enabled signature algorithms.
    */
-  Napi::Value getEnabledAlgorithms(const Napi::CallbackInfo& info) {
+Napi::Value getEnabledAlgorithms(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
+
+    std::cout << "[getEnabledAlgorithms] Called from Node.js" << std::endl;
+
+    // Get all enabled signature algorithms from liboqs-cpp
     const std::vector<std::string> enabledSigs = oqs::Sigs::get_enabled_sigs();
+
+    std::cout << "[getEnabledAlgorithms] Retrieved " << enabledSigs.size() << " algorithms" << std::endl;
+
     std::size_t numDefaultSigs = 0;
+
+    // Count how many "DEFAULT" algorithms are present
     for (auto sig : enabledSigs) {
-      // Not expecting any other default algorithms to be created
-      if (sig == "DEFAULT") {
-        numDefaultSigs++;
-      }
+        if (sig == "DEFAULT") {
+            numDefaultSigs++;
+            std::cout << "[getEnabledAlgorithms] Found 'DEFAULT' algorithm" << std::endl;
+        }
     }
+
+    std::cout << "[getEnabledAlgorithms] Number of 'DEFAULT' algorithms: " << numDefaultSigs << std::endl;
+
+    // Create a JS array to return to Node.js
     auto enabledSigsArray = Napi::Array::New(env);
+
     std::size_t i = 0;
     for (const auto& sig : enabledSigs) {
-      if (sig != "DEFAULT") {
-        enabledSigsArray[i++] = Napi::String::New(env, sig);
-      }
+        if (sig != "DEFAULT") {
+            std::cout << "[getEnabledAlgorithms] Adding algorithm to result: " << sig << std::endl;
+            enabledSigsArray[i++] = Napi::String::New(env, sig);
+        }
     }
-    return enabledSigsArray;
-  }
 
+    std::cout << "[getEnabledAlgorithms] Returning " << i << " algorithms to JS" << std::endl;
+
+    return enabledSigsArray;
+}
   /**
    * Checks if an algorithm was enabled at compile-time and is available for use.
    * @memberof Sigs

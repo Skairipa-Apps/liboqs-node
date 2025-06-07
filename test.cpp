@@ -1,19 +1,26 @@
-#include <iostream>
+#include <napi.h>
 #include "oqs_cpp.hpp"
 
-int main() {
-    std::cout << "Calling oqs::Sigs::get_enabled_sigs()..." << std::endl;
+Napi::Value GetEnabledAlgorithmsWrapped(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
 
-    try {
-        auto sigs = oqs::Sigs::get_enabled_sigs();
-        std::cout << "Got " << sigs.size() << " signature algorithms:" << std::endl;
-        for (const auto& sig : sigs) {
-            std::cout << " - " << sig << std::endl;
-        }
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+  try {
+    auto sigs = oqs::Sigs::get_enabled_sigs();
+    Napi::Array result = Napi::Array::New(env, sigs.size());
+    for (size_t i = 0; i < sigs.size(); i++) {
+      result.Set(i, Napi::String::New(env, sigs[i]));
     }
-
-    return 0;
+    return result;
+  } catch (const std::exception& e) {
+    Napi::TypeError::New(env, e.what()).ThrowAsJavaScriptException();
+    return env.Null();
+  }
 }
+
+Napi::Object Init(Napi::Env env, Napi::Object exports) {
+  exports.Set("getEnabledAlgorithms", Napi::Function::New(env, GetEnabledAlgorithmsWrapped));
+  return exports;
+}
+
+NODE_API_MODULE(oqs_node, Init);
 
