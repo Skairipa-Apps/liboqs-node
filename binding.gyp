@@ -88,8 +88,16 @@
     "../deps/liboqs/build/lib/liboqs.a",
     "-L/opt/homebrew/opt/openssl@3/lib",
     "-lcrypto",
-    "-lssl"
-  ]
+    "-lssl",
+    "-Wl,-rpath,@loader_path/../deps/liboqs/build/lib"
+  ],
+  "link_settings": {
+    "libraries": [
+      "-loqs",
+      "-L../deps/liboqs/build/lib",
+      "-Wl,-rpath,@loader_path/../deps/liboqs/build/lib"
+    ]
+  }
 }]
       ],
       "module_path": "lib/binding/{platform}-{arch}/"
